@@ -25,7 +25,6 @@ const ToolDetailPage = () => {
   const { data: reviewsData, isLoading: reviewsLoading } = useToolReviews(tool?.slug, 1, 10);
   const { data: reviewStats } = useReviewStats(tool?.slug);
   const { data: myReview } = useMyReviewForTool(tool?.slug);
-  
   const trackClick = useTrackClick();
   const createReview = useCreateReview();
   const markHelpful = useMarkHelpful();
@@ -450,7 +449,7 @@ const ToolDetailPage = () => {
                 )}
 
                 {/* Write Review Form */}
-                {!myReview && (
+                {isAuthenticated && !myReview && (
                   <div className="p-4 rounded-lg bg-[#0a0a0a] border border-[#262626]">
                     <h3 className="text-base font-bold mb-3 text-white">Write a Review</h3>
                     <form onSubmit={handleSubmitReview} className="space-y-3">

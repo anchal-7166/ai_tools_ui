@@ -8,7 +8,6 @@ export const reviewsApi = {
     title?: string;
     comment: string;
   }) => {
-    console.log(reviewData)
     const { data } = await apiClient.post('/reviews', reviewData);
     return data;
   },

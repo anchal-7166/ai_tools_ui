@@ -1,6 +1,7 @@
 // src/lib/hooks/use-reviews.ts
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { reviewsApi } from '../api/reviews';
+import { useAuthStore } from '../store/auth-store';
 
 export function useToolReviews(slug: string, page: number = 1, limit: number = 20) {
   return useQuery({
@@ -20,12 +21,39 @@ export function useReviewStats(slug: string) {
   });
 }
 
+// export function useMyReviewForTool(slug: string) {
+//   return useQuery({
+//     queryKey: ['reviews', 'my-review', slug],
+//     queryFn: () => reviewsApi.getMyReviewForTool(slug),
+//     enabled: !!slug,
+//     staleTime: 60000,
+//   });
+// }
+
+
 export function useMyReviewForTool(slug: string) {
+  const { isAuthenticated } = useAuthStore();
+  
   return useQuery({
     queryKey: ['reviews', 'my-review', slug],
-    queryFn: () => reviewsApi.getMyReviewForTool(slug),
-    enabled: !!slug,
+    queryFn: async () => {
+      try {
+        return await reviewsApi.getMyReviewForTool(slug);
+      } catch (error: any) {
+        // If 404, user hasn't reviewed yet - return null instead of error
+        if (error.response?.status === 404) {
+          return null;
+        }
+        // If 401, user not authenticated - return null
+        if (error.response?.status === 401) {
+          return null;
+        }
+        throw error;
+      }
+    },
+    enabled: !!slug && isAuthenticated,
     staleTime: 60000,
+    retry: false,
   });
 }
 

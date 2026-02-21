@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { useAuthStore } from '../store/auth-store';
 
 const apiClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
@@ -12,9 +13,11 @@ const apiClient = axios.create({
 // Request interceptor - add auth token
 apiClient.interceptors.request.use(
   (config) => {
+     
     // Get token from localStorage
     if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('accessToken');
+      // const token = localStorage.getItem('accessToken');
+      const token = useAuthStore.getState().accessToken;
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -59,7 +62,7 @@ apiClient.interceptors.response.use(
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('user');
-        window.location.href = '/login';
+        // window.location.href = '/login';
         return Promise.reject(refreshError);
       }
     }

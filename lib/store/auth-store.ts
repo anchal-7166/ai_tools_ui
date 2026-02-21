@@ -1,5 +1,6 @@
 // src/lib/store/auth-store.ts
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import type { User } from '@/types/auth.type';
 
 interface AuthState {
@@ -12,52 +13,41 @@ interface AuthState {
   updateUser: (user: User) => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
-  accessToken: null,
-  refreshToken: null,
-  isAuthenticated: false,
-
-  setAuth: (user, accessToken, refreshToken) => {
-    console.log('💾 Saving to localStorage:', { user, accessToken, refreshToken });
-    
-    // Save to localStorage
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
-      localStorage.setItem('user', JSON.stringify(user));
-    }
-
-    // Update Zustand state
-    set({
-      user,
-      accessToken,
-      refreshToken,
-      isAuthenticated: true,
-    });
-  },
-
-  clearAuth: () => {
-    // Clear localStorage
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('user');
-    }
-
-    // Clear Zustand state
-    set({
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
       user: null,
       accessToken: null,
       refreshToken: null,
       isAuthenticated: false,
-    });
-  },
 
-  updateUser: (user) => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('user', JSON.stringify(user));
+      setAuth: (user, accessToken, refreshToken) => {
+        console.log('💾 Saving auth state');
+        set({
+          user,
+          accessToken,
+          refreshToken,
+          isAuthenticated: true,
+        });
+      },
+
+      clearAuth: () => {
+        console.log('🗑️ Clearing auth state');
+        set({
+          user: null,
+          accessToken: null,
+          refreshToken: null,
+          isAuthenticated: false,
+        });
+      },
+
+      updateUser: (user) => {
+        set({ user });
+      },
+    }),
+    {
+      name: 'auth-storage', // LocalStorage key
+      storage: createJSONStorage(() => localStorage),
     }
-    set({ user });
-  },
-}));
+  )
+);

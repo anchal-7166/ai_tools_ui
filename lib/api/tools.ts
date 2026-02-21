@@ -51,23 +51,6 @@ export const toolsApi = {
     return data;
   },
 
-  /**
-   * Get tool by slug
-   */
-  getBySlug: async (slug: string): Promise<Tool> => {
-    const { data } = await apiClient.get<Tool>(`/tools/${slug}`);
-    return data;
-  },
-
-  /**
-   * Get similar tools
-   */
-  getSimilar: async (slug: string, limit: number = 6): Promise<Tool[]> => {
-    const { data } = await apiClient.get<Tool[]>(`/tools/${slug}/similar`, {
-      params: { limit },
-    });
-    return data;
-  },
 
   /**
    * Get tools by category
@@ -90,14 +73,6 @@ export const toolsApi = {
   },
 
   /**
-   * Track click
-   */
-  trackClick: async (slug: string): Promise<{ url: string }> => {
-    const { data } = await apiClient.post<{ url: string }>(`/tools/${slug}/click`);
-    return data;
-  },
-
-  /**
    * Get platform stats
    */
   getStats: async (): Promise<{
@@ -108,4 +83,28 @@ export const toolsApi = {
     const { data } = await apiClient.get('/tools/stats');
     return data;
   },
+
+  getBySlug: async (slug: string) => {
+    const { data } = await apiClient.get(`/tools/${slug}`);
+    return data;
+  },
+  getById: async (id: string) => {
+    const { data } = await apiClient.get(`/tools/id/${id}`);
+    return data;
+  },
+
+  // Get similar tools
+  getSimilar: async (slug: string, limit: number = 6) => {
+    const { data } = await apiClient.get(`/tools/${slug}/similar`, {
+      params: { limit }
+    });
+    return data;
+  },
+
+  // Track click
+  trackClick: async (slug: string) => {
+    const { data } = await apiClient.post(`/tools/${slug}/click`);
+    return data;
+  },
+
 };

@@ -1,3 +1,53 @@
+// 'use client';
+
+// import React, { useState } from 'react';
+// import Header from './Header';
+// import Sidebar from './Sidebar';
+// import Footer from './Footer';
+
+// interface PublicLayoutProps {
+//   children: React.ReactNode;
+//   onFilterChange?: (filters: any) => void;
+//   activeFilters?: any;
+// }
+
+// const PublicLayout = ({ children, onFilterChange, activeFilters }: PublicLayoutProps) => {
+//   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+//   const toggleSidebar = () => {
+//     setIsSidebarOpen(!isSidebarOpen);
+//   };
+
+//   return (
+//     <div className="min-h-screen bg-black">
+//       <Header onSidebarToggle={toggleSidebar} />
+
+//       <div className="flex">
+//         <Sidebar 
+//           isOpen={isSidebarOpen} 
+//           onClose={() => setIsSidebarOpen(false)}
+//           onFilterChange={onFilterChange || (() => {})}
+//           activeFilters={activeFilters || {}}
+//         />
+
+//         <main className="flex-1 min-h-screen bg-neutral-950">
+//           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+//             {children}
+//           </div>
+//         </main>
+//       </div>
+
+//       <Footer />
+//     </div>
+//   );
+// };
+
+// export default PublicLayout;
+
+
+
+
+// src/components/public/PublicLayout.tsx
 'use client';
 
 import React, { useState } from 'react';
@@ -5,8 +55,14 @@ import Header from './Header';
 import Sidebar from './Sidebar';
 import Footer from './Footer';
 
-// This layout is ONLY for public pages with sidebar and header
-const PublicLayout = ({ children }) => {
+interface PublicLayoutProps {
+  children: React.ReactNode;
+  onFilterChange?: (filters: any) => void;
+  activeFilters?: any;
+  onSearch?: (query: string) => void; // Add search callback
+}
+
+const PublicLayout = ({ children, onFilterChange, activeFilters, onSearch }: PublicLayoutProps) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const toggleSidebar = () => {
@@ -15,15 +71,19 @@ const PublicLayout = ({ children }) => {
 
   return (
     <div className="min-h-screen bg-black">
-      {/* Header - only shows on public pages */}
-      <Header onSidebarToggle={toggleSidebar} />
+      <Header 
+        onSidebarToggle={toggleSidebar} 
+        onSearch={onSearch}
+      />
 
-      {/* Main Content Area with Sidebar */}
       <div className="flex">
-        {/* Sidebar - only shows on public pages */}
-        <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+        <Sidebar 
+          isOpen={isSidebarOpen} 
+          onClose={() => setIsSidebarOpen(false)}
+          onFilterChange={onFilterChange || (() => {})}
+          activeFilters={activeFilters || {}}
+        />
 
-        {/* Main Content */}
         <main className="flex-1 min-h-screen bg-neutral-950">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             {children}
@@ -31,8 +91,7 @@ const PublicLayout = ({ children }) => {
         </main>
       </div>
 
-       {/* footer section  */}
-        <Footer/>
+      <Footer />
     </div>
   );
 };

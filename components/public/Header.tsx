@@ -1,33 +1,48 @@
 'use client';
-
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '@/lib/store/auth-store';
-import { Logo } from '../logo';
 
-const Header = ({ onSidebarToggle }) => {
+interface HeaderProps {
+  onSidebarToggle: () => void;
+  onSearch?: (query: string) => void; 
+}
+
+const Header = ({ onSidebarToggle, onSearch }: HeaderProps) => {
   const [searchMode, setSearchMode] = useState('text');
+  const [searchQuery, setSearchQuery] = useState('');
   const [isListening, setIsListening] = useState(false);
-  // Check if user is authenticated
-  const { isAuthenticated, user } = useAuthStore();
+  
+  const { isAuthenticated } = useAuthStore();
 
   const handleVoiceClick = () => {
     setSearchMode('voice');
     setIsListening(!isListening);
   };
 
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim() && onSearch) {
+      onSearch(searchQuery.trim());
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch(e as any);
+    }
+  };
+
   return (
     <header className="relative bg-black border-b border-neutral-800">
-      {/* Background with subtle pattern */}
       <div className="absolute inset-0 bg-gradient-to-br from-neutral-950 via-black to-neutral-950 opacity-50"></div>
       
-      {/* Content */}
       <div className="relative z-10 max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-3 sm:py-4">
         
         {/* Top Row: Logo + Heading/Description + Login/Dashboard */}
-        <div className="flex items-center justify-between mb-3 sm:mb-4 ">
+        <div className="flex items-center justify-between mb-3 sm:mb-4">
           {/* Left: Logo + Mobile Menu */}
-          <div className="flex items-center space-x-2 sm:space-x-3 bg-white">
+          <div className="flex items-center gap-2 sm:gap-3">
             {/* Sidebar Toggle (Mobile) */}
             <button
               onClick={onSidebarToggle}
@@ -38,9 +53,16 @@ const Header = ({ onSidebarToggle }) => {
               </svg>
             </button>
 
-            {/* Logo */}
-            <Link href="/" className="flex items-center space-x-1.5 sm:space-x-2 group">
-              <img src="/aitool3.png" alt="" className='w-16 h-16 ' />
+            {/* Logo + Title */}
+            <Link href="/" className="flex items-center gap-2 sm:gap-3 group">
+              <img 
+                src="/aitool3.png" 
+                alt="AI Tool Store" 
+                className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 object-contain" 
+              />
+              <span className="font-bold text-sm sm:text-base lg:text-lg text-white whitespace-nowrap">
+                AI Tool Store
+              </span>
             </Link>
           </div>
 
@@ -69,7 +91,6 @@ const Header = ({ onSidebarToggle }) => {
               </svg>
               <span className="relative z-10 hidden sm:inline">Dashboard</span>
               <div className="absolute inset-0 bg-gradient-to-r from-red-700 to-red-900 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <div className="absolute inset-0 bg-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-out"></div>
             </Link>
           ) : (
             <Link
@@ -78,18 +99,20 @@ const Header = ({ onSidebarToggle }) => {
             >
               <span className="relative z-10">Login</span>
               <div className="absolute inset-0 bg-gradient-to-r from-red-700 to-red-900 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <div className="absolute inset-0 bg-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-out"></div>
             </Link>
           )}
         </div>
 
         {/* Bottom Row: Enhanced Search Bar */}
-        <div className="max-w-4xl mx-auto">
+        <form onSubmit={handleSearch} className="max-w-4xl mx-auto">
           <div className="relative flex items-center gap-1.5 sm:gap-2">
             {/* Search Input with Mode Indicator */}
             <div className="relative flex-1">
               <input
                 type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={handleKeyPress}
                 placeholder={
                   searchMode === 'text' ? 'Search AI tools...' :
                   searchMode === 'chat' ? 'Ask AI...' :
@@ -105,7 +128,7 @@ const Header = ({ onSidebarToggle }) => {
                 disabled={searchMode === 'voice' && isListening}
               />
               
-              {/* Active Mode Badge - Hidden on very small screens */}
+              {/* Active Mode Badge */}
               {searchMode !== 'text' && (
                 <div className="hidden sm:block absolute right-3 sm:right-4 top-1/2 -translate-y-1/2">
                   {searchMode === 'chat' && (
@@ -129,10 +152,11 @@ const Header = ({ onSidebarToggle }) => {
               )}
             </div>
 
-            {/* AI Mode Options - Compact on mobile */}
+            {/* AI Mode Options */}
             <div className="flex items-center bg-gradient-to-br from-neutral-900 to-neutral-950 border border-neutral-700/50 rounded-lg sm:rounded-xl p-1 sm:p-1.5 gap-0.5 sm:gap-1 shadow-xl">
               {/* Text Search */}
               <button
+                type="button"
                 onClick={() => setSearchMode('text')}
                 className={`
                   relative p-1.5 sm:p-2 lg:p-2.5 rounded-md sm:rounded-lg transition-all duration-300 group overflow-hidden
@@ -146,13 +170,11 @@ const Header = ({ onSidebarToggle }) => {
                 <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 lg:w-4 lg:h-4 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
-                {searchMode === 'text' && (
-                  <div className="absolute inset-0 bg-gradient-to-br from-red-500 to-red-800 animate-pulse opacity-50"></div>
-                )}
               </button>
 
               {/* AI Chatbot */}
               <button
+                type="button"
                 onClick={() => setSearchMode('chat')}
                 className={`
                   relative p-1.5 sm:p-2 lg:p-2.5 rounded-md sm:rounded-lg transition-all duration-300 group overflow-hidden
@@ -166,16 +188,11 @@ const Header = ({ onSidebarToggle }) => {
                 <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 lg:w-4 lg:h-4 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                 </svg>
-                {searchMode === 'chat' && (
-                  <>
-                    <div className="absolute inset-0 bg-gradient-to-br from-red-500 to-red-800 animate-pulse opacity-50"></div>
-                    <div className="absolute top-0 right-0 w-1 sm:w-1.5 h-1 sm:h-1.5 bg-red-300 rounded-full animate-ping"></div>
-                  </>
-                )}
               </button>
 
               {/* Voice Search */}
               <button
+                type="button"
                 onClick={handleVoiceClick}
                 className={`
                   relative p-1.5 sm:p-2 lg:p-2.5 rounded-md sm:rounded-lg transition-all duration-300 group overflow-hidden
@@ -189,36 +206,25 @@ const Header = ({ onSidebarToggle }) => {
                 <svg className={`w-3 h-3 sm:w-3.5 sm:h-3.5 lg:w-4 lg:h-4 relative z-10 transition-transform ${isListening && searchMode === 'voice' ? 'scale-110' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
                 </svg>
-                {searchMode === 'voice' && (
-                  <>
-                    <div className="absolute inset-0 bg-gradient-to-br from-red-500 to-red-800 animate-pulse opacity-50"></div>
-                    {isListening && (
-                      <>
-                        <div className="absolute inset-0 rounded-md sm:rounded-lg border border-red-400 animate-ping opacity-75"></div>
-                        <div className="absolute inset-[-1px] sm:inset-[-2px] rounded-md sm:rounded-lg border border-red-500 animate-pulse"></div>
-                      </>
-                    )}
-                  </>
-                )}
               </button>
             </div>
 
-            {/* Enhanced Search Button - Compact on mobile */}
-            <button className="relative px-3 sm:px-4 lg:px-6 py-2 sm:py-2.5 lg:py-3 bg-gradient-to-r from-red-600 via-red-700 to-red-800 text-white font-semibold text-xs sm:text-sm rounded-lg sm:rounded-xl overflow-hidden group transition-all hover:shadow-2xl hover:shadow-red-900/50 active:scale-95">
+            {/* Search Button */}
+            <button 
+              type="submit"
+              className="relative px-3 sm:px-4 lg:px-6 py-2 sm:py-2.5 lg:py-3 bg-gradient-to-r from-red-600 via-red-700 to-red-800 text-white font-semibold text-xs sm:text-sm rounded-lg sm:rounded-xl overflow-hidden group transition-all hover:shadow-2xl hover:shadow-red-900/50 active:scale-95"
+            >
               <span className="relative z-10 flex items-center gap-1 sm:gap-2">
                 <span className="hidden sm:inline">Search</span>
                 <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
               </span>
-              {/* Shimmer Effect */}
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-              {/* Glow Effect */}
-              <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-red-900 opacity-0 group-hover:opacity-100 transition-opacity blur-xl"></div>
             </button>
           </div>
 
-          {/* Mode Description - Hidden on mobile */}
+          {/* Mode Description */}
           <div className="mt-1.5 sm:mt-2 text-center min-h-[16px] sm:min-h-[20px] hidden sm:block">
             {searchMode === 'text' && (
               <p className="text-[10px] sm:text-xs text-neutral-500 animate-fade-in">
@@ -242,7 +248,7 @@ const Header = ({ onSidebarToggle }) => {
               </p>
             )}
           </div>
-        </div>
+        </form>
 
         {/* Mobile: Heading below search */}
         <div className="md:hidden text-center mt-2 sm:mt-3">

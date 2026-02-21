@@ -65,7 +65,8 @@ export default function Footer() {
 
       {/* Bottom Bar */}
       <div className="border-t border-[var(--color-border)] py-4 text-center text-sm text-[var(--color-text-muted)]">
-        © {new Date().getFullYear()} AIStore. All rights reserved. Powered by aiAnt(founded by anchal)
+        © {new Date().getFullYear()} 
+        {/* AIStore. All rights reserved. Powered by aiAnt(founded by anchal) */}
       </div>
     </footer>
   );

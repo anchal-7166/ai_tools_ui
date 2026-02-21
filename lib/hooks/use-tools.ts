@@ -1,4 +1,3 @@
-// src/lib/hooks/use-tools.ts
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -38,13 +37,6 @@ export function useNewTools(limit: number = 20) {
   });
 }
 
-export function useToolBySlug(slug: string) {
-  return useQuery({
-    queryKey: ['tools', slug],
-    queryFn: () => toolsApi.getBySlug(slug),
-    enabled: !!slug,
-  });
-}
 
 export function useFilteredTools(filterQuery: FilterQuery) {
   return useQuery({
@@ -55,19 +47,6 @@ export function useFilteredTools(filterQuery: FilterQuery) {
   });
 }
 
-export function useGlobalSearch(searchTerm: string, filters: any = {}) {
-  return useQuery({
-    queryKey: ['tools', 'search', searchTerm, filters],
-    queryFn: () =>
-      filtersApi.globalSearch({
-        prompt: searchTerm,
-        all: true,
-        ...filters,
-      }),
-    enabled: searchTerm.length > 0,
-    staleTime: 10000,
-  });
-}
 
 export function useFilterOptions() {
   return useQuery({
@@ -77,14 +56,56 @@ export function useFilterOptions() {
   });
 }
 
+
+// src/lib/hooks/use-tools.ts - Add these hooks
+export function useToolBySlug(slug: string) {
+  return useQuery({
+    queryKey: ['tool', slug],
+    queryFn: () => toolsApi.getBySlug(slug),
+    staleTime: 300000, // 5 minutes
+    enabled: !!slug,
+  });
+}
+
+export function useToolById(id: string) {
+  return useQuery({
+    queryKey: ['tool', id],
+    queryFn: () => toolsApi.getById(id),
+    staleTime: 300000, // 5 minutes
+    enabled: !!id,
+  });
+}
+
+export function useSimilarTools(slug: string, limit: number = 6) {
+  return useQuery({
+    queryKey: ['tools', 'similar', slug, limit],
+    queryFn: () => toolsApi.getSimilar(slug, limit),
+    staleTime: 300000,
+    enabled: !!slug,
+  });
+}
+
 export function useTrackClick() {
   const queryClient = useQueryClient();
-
+  
   return useMutation({
     mutationFn: (slug: string) => toolsApi.trackClick(slug),
-    onSuccess: () => {
-      // Optionally refetch tools to update click counts
-      queryClient.invalidateQueries({ queryKey: ['tools'] });
+    onSuccess: (_, slug) => {
+      // Invalidate tool query to refresh view count
+      queryClient.invalidateQueries({ queryKey: ['tool', slug] });
     },
+  });
+}
+
+
+export function useGlobalSearch(searchTerm: string, filters?: any, options?: any) {
+  return useQuery({
+    queryKey: ['tools', 'search', searchTerm, filters],
+    queryFn: () => filtersApi.globalSearch({ 
+      prompt: searchTerm,
+      ...filters 
+    }),
+    enabled: options?.enabled !== false && searchTerm.length > 0,
+    staleTime: 10000,
   });
 }

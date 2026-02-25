@@ -27,7 +27,7 @@ export default function DashboardLayout({
         className="transition-all duration-300"
         style={{ paddingLeft: isCollapsed ? '4rem' : '16rem' }} // 64px / 256px — matches w-16 / w-64
       >
-        <main className="min-h-screen flex flex-col mb-12">
+        <main className="min-h-screen flex flex-col pb-12">
           <header
             className="sticky top-0 z-40 px-6 py-4"
             style={{
@@ -38,7 +38,7 @@ export default function DashboardLayout({
             <div className="flex items-center justify-between">
               {/* Page Title */}
               <div>
-                <p className="text-sm mt-0.5 text-gray-200">
+                <p className="text-sm mt-0.5 hidden sm:block text-gray-200">
                   Manage your AI tools and analytics
                 </p>
               </div>
@@ -82,7 +82,7 @@ export default function DashboardLayout({
                 {/* Add New Tool Button */}
                 <Link
                   href="/dashboard/submit"
-                  className="px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition-transform hover:scale-105"
+                  className="px-3 md:px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition-transform hover:scale-105"
                   style={{
                     background: 'linear-gradient(to right, var(--color-primary), var(--color-primary-dark))',
                     color: 'var(--color-text-primary)'

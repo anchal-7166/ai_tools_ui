@@ -14,7 +14,6 @@ const DashboardSidebar = ({ isCollapsed, onToggle }: DashboardSidebarProps) => {
 
   const menuItems = [
     {
-      section: 'Tools',
       items: [
         {
           id: 'Overview',
@@ -25,7 +24,6 @@ const DashboardSidebar = ({ isCollapsed, onToggle }: DashboardSidebarProps) => {
             </svg>
           ),
           href: '/dashboard/overview',
-          badge: '12'
         },
         {
           id: 'drafts',
@@ -124,28 +122,9 @@ const DashboardSidebar = ({ isCollapsed, onToggle }: DashboardSidebarProps) => {
               isCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'
             }`}
           >
-            <div
-              className="w-8 h-8 rounded flex items-center justify-center flex-shrink-0"
-              style={{
-                background: 'linear-gradient(to bottom right, var(--color-primary), var(--color-primary-dark))'
-              }}
-            >
-              <svg
-                className="w-5 h-5 flex-shrink-0"
-                style={{ color: 'var(--color-text-primary)' }}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-            </div>
-            <span
-              className="text-sm font-bold whitespace-nowrap"
-              style={{ color: 'var(--color-text-primary)' }}
-            >
-              Dashboard
-            </span>
+           
+           <h1>AI Tool Store </h1>
+           <img src="/aitool3.png" alt="" className='w-12 h-12' />
           </div>
 
           {/* Toggle button — centered when collapsed */}
@@ -167,6 +146,51 @@ const DashboardSidebar = ({ isCollapsed, onToggle }: DashboardSidebarProps) => {
             </svg>
           </button>
         </div>
+
+
+
+ <div
+          className="p-3 flex-shrink-0"
+          style={{ borderTop: '1px solid var(--color-border)' }}
+        >
+          <Link
+            href="/dashboard/profile"
+            className="flex items-center gap-2.5 p-2 rounded transition-all group"
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--color-bg-tertiary)')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+          >
+            <div
+              className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
+              style={{
+                background: 'linear-gradient(to bottom right, var(--color-primary), var(--color-primary-dark))',
+                color: 'var(--color-text-primary)'
+              }}
+            >
+              A
+            </div>
+            {/* Name + subtitle — slides out on collapse */}
+            <div
+              className={`flex-1 min-w-0 overflow-hidden transition-all duration-300 ${
+                isCollapsed ? 'max-w-0 opacity-0' : 'max-w-full opacity-100'
+              }`}
+            >
+              <div
+                className="text-sm font-medium whitespace-nowrap truncate"
+                style={{ color: 'var(--color-text-primary)' }}
+              >
+                Anchal
+              </div>
+              <div className="text-xs whitespace-nowrap" style={{ color: 'var(--color-text-muted)' }}>
+                View Profile
+              </div>
+            </div>
+          </Link>
+        </div>
+
+
+
+
+
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto overflow-x-hidden p-2 space-y-4">
@@ -279,45 +303,6 @@ const DashboardSidebar = ({ isCollapsed, onToggle }: DashboardSidebarProps) => {
             </div>
           ))}
         </nav>
-
-        {/* User Profile */}
-        <div
-          className="p-3 flex-shrink-0"
-          style={{ borderTop: '1px solid var(--color-border)' }}
-        >
-          <Link
-            href="/dashboard/profile"
-            className="flex items-center gap-2.5 p-2 rounded transition-all group"
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--color-bg-tertiary)')}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-          >
-            <div
-              className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
-              style={{
-                background: 'linear-gradient(to bottom right, var(--color-primary), var(--color-primary-dark))',
-                color: 'var(--color-text-primary)'
-              }}
-            >
-              JD
-            </div>
-            {/* Name + subtitle — slides out on collapse */}
-            <div
-              className={`flex-1 min-w-0 overflow-hidden transition-all duration-300 ${
-                isCollapsed ? 'max-w-0 opacity-0' : 'max-w-full opacity-100'
-              }`}
-            >
-              <div
-                className="text-sm font-medium whitespace-nowrap truncate"
-                style={{ color: 'var(--color-text-primary)' }}
-              >
-                John Doe
-              </div>
-              <div className="text-xs whitespace-nowrap" style={{ color: 'var(--color-text-muted)' }}>
-                View Profile
-              </div>
-            </div>
-          </Link>
-        </div>
       </div>
     </aside>
   );

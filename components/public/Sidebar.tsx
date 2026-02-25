@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
+import React, { useState } from 'react';
 import { useFilterOptions } from '@/lib/hooks/use-tools';
 
 interface SidebarProps {
@@ -12,8 +11,9 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ isOpen, onClose, onFilterChange, activeFilters }: SidebarProps) => {
-  const { data: filterOptionsResponse, isLoading } = useFilterOptions(); 
+  const { data: filterOptionsResponse, isLoading } = useFilterOptions();
   const filterOptions = filterOptionsResponse?.filters || [];
+
   const [expandedSections, setExpandedSections] = useState({
     categories: true,
     features: false,
@@ -21,54 +21,35 @@ const Sidebar = ({ isOpen, onClose, onFilterChange, activeFilters }: SidebarProp
     pricing: false,
   });
 
-  const [selectedFilters, setSelectedFilters] = useState({
-    categories: [] as string[],
-    tags: [] as string[],
-    platformType: [] as string[],
-    targetAudience: [] as string[],
-    pricingType: [] as string[],
-  });
-
   const [sortBy, setSortBy] = useState('newest');
 
-  // Use effect to notify parent of filter changes
-  useEffect(() => {
-    onFilterChange(selectedFilters);
-  }, [selectedFilters]); // Only trigger when selectedFilters changes
+  // ── NO internal selectedFilters state ────────────────────────────────
+  // Checkboxes read directly from activeFilters (prop), so when the parent
+  // clears or mutates filters the sidebar instantly reflects the change.
 
   const toggleSection = (section: string) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [section]: !prev[section],
-    }));
+    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
-  const handleFilterChange = (filterType: string, value: any, isChecked: boolean) => {
-    setSelectedFilters(prev => {
-      const updated = { ...prev };
-      
-      if (Array.isArray(updated[filterType as keyof typeof updated])) {
-        const array = updated[filterType as keyof typeof updated] as string[];
-        if (isChecked) {
-          updated[filterType as keyof typeof updated] = [...array, value] as any;
-        } else {
-          updated[filterType as keyof typeof updated] = array.filter(v => v !== value) as any;
-        }
-      }
+  const handleFilterChange = (filterType: string, value: string, isChecked: boolean) => {
+    const current: string[] = activeFilters[filterType] || [];
+    const updated = isChecked
+      ? [...current, value]
+      : current.filter((v: string) => v !== value);
 
-      return updated;
-    });
+    // Notify parent with the full updated filter object
+    onFilterChange({ ...activeFilters, [filterType]: updated });
   };
 
   const clearAllFilters = () => {
-    setSelectedFilters({
+    setSortBy('newest');
+    onFilterChange({
       categories: [],
       tags: [],
       platformType: [],
       targetAudience: [],
       pricingType: [],
     });
-    setSortBy('newest');
   };
 
   const getFilterOptions = (path: string) => {
@@ -76,16 +57,16 @@ const Sidebar = ({ isOpen, onClose, onFilterChange, activeFilters }: SidebarProp
     return filter?.options || [];
   };
 
-  const categories = getFilterOptions('categories.category.slug');
-  const platforms = getFilterOptions('platformType');
-  const audiences = getFilterOptions('targetAudience');
-  const pricingTypes = getFilterOptions('pricingPlans.type');
+  const categories    = getFilterOptions('categories.category.slug');
+  const platforms     = getFilterOptions('platformType');
+  const audiences     = getFilterOptions('targetAudience');
+  const pricingTypes  = getFilterOptions('pricingPlans.type');
 
   if (isLoading) {
     return (
       <aside className="fixed top-0 left-0 h-full w-64 bg-black border-r border-[#262626] z-50 lg:static">
         <div className="p-4 flex items-center justify-center">
-          <div className="animate-spin w-6 h-6 border-2 border-red-600 border-t-transparent rounded-full"></div>
+          <div className="animate-spin w-6 h-6 border-2 border-red-600 border-t-transparent rounded-full" />
         </div>
       </aside>
     );
@@ -94,7 +75,7 @@ const Sidebar = ({ isOpen, onClose, onFilterChange, activeFilters }: SidebarProp
   return (
     <>
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
           onClick={onClose}
         />
@@ -110,6 +91,8 @@ const Sidebar = ({ isOpen, onClose, onFilterChange, activeFilters }: SidebarProp
         `}
       >
         <div className="p-4 space-y-4">
+
+          {/* Mobile header */}
           <div className="flex items-center justify-between lg:hidden pb-3 border-b border-[#262626]">
             <h2 className="text-lg font-bold text-white">Filters</h2>
             <button onClick={onClose} className="p-1.5 hover:bg-[#1a1a1a] rounded">
@@ -119,6 +102,7 @@ const Sidebar = ({ isOpen, onClose, onFilterChange, activeFilters }: SidebarProp
             </button>
           </div>
 
+          {/* Action buttons */}
           <div className="grid grid-cols-2 gap-2">
             <button
               onClick={clearAllFilters}
@@ -127,36 +111,17 @@ const Sidebar = ({ isOpen, onClose, onFilterChange, activeFilters }: SidebarProp
               Clear All
             </button>
             <button
-              onClick={() => setExpandedSections({
-                categories: true,
-                features: true,
-                targetUsers: true,
-                pricing: true,
-              })}
+              onClick={() => setExpandedSections({ categories: true, features: true, targetUsers: true, pricing: true })}
               className="px-2.5 py-2 bg-[#1a1a1a] hover:bg-[#262626] border border-[#262626] rounded text-sm text-[#b3b3b3] hover:text-white transition-colors"
             >
               Expand All
             </button>
           </div>
 
-          <div className="space-y-2">
-            <h3 className="text-xs font-semibold text-[#8c8c8c] uppercase tracking-wider">Popular</h3>
-            <div className="grid grid-cols-2 gap-1.5">
-              {['Development', 'Video', 'Design', 'Writing'].map((cat) => (
-                <Link
-                  key={cat}
-                  href={`/category/${cat.toLowerCase()}`}
-                  className="group relative px-2 py-1.5 bg-[#1a1a1a] hover:bg-gradient-to-br hover:from-[#8a1212] hover:to-[#991b1b] border border-[#262626] hover:border-[#8a1212] rounded text-xs text-center text-[#b3b3b3] hover:text-white transition-all duration-200"
-                >
-                  <span className="font-medium">{cat}</span>
-                </Link>
-              ))}
-            </div>
-          </div>
-
+          {/* Sort By */}
           <div className="space-y-2">
             <h3 className="text-xs font-semibold text-[#8c8c8c] uppercase tracking-wider">Sort By</h3>
-            <select 
+            <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
               className="w-full px-3 py-2 bg-[#1a1a1a] border border-[#262626] rounded text-sm text-[#b3b3b3] focus:outline-none focus:ring-2 focus:ring-[#8a1212]"
@@ -168,7 +133,7 @@ const Sidebar = ({ isOpen, onClose, onFilterChange, activeFilters }: SidebarProp
             </select>
           </div>
 
-          {/* Categories */}
+          {/* ── Categories ──────────────────────────────────────────────── */}
           {categories.length > 0 && (
             <div className="space-y-1">
               <div className="flex items-center justify-between">
@@ -176,15 +141,13 @@ const Sidebar = ({ isOpen, onClose, onFilterChange, activeFilters }: SidebarProp
                 <button onClick={() => toggleSection('categories')} className="p-1 hover:bg-[#1a1a1a] rounded">
                   <svg
                     className={`w-4 h-4 text-[#8c8c8c] transition-transform ${expandedSections.categories ? 'rotate-180' : ''}`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24"
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
               </div>
-              
+
               {expandedSections.categories && (
                 <div className="space-y-1 max-h-64 overflow-y-auto">
                   {categories.map((cat: any) => (
@@ -194,11 +157,14 @@ const Sidebar = ({ isOpen, onClose, onFilterChange, activeFilters }: SidebarProp
                     >
                       <input
                         type="checkbox"
-                        checked={selectedFilters.categories.includes(cat.value)}
+                        // ── Read from prop, not internal state ───────────
+                        checked={!!(activeFilters.categories?.includes(cat.value))}
                         onChange={(e) => handleFilterChange('categories', cat.value, e.target.checked)}
                         className="w-4 h-4 flex-shrink-0 bg-[#0a0a0a] border-[#404040] rounded text-[#8a1212] focus:ring-[#8a1212]"
                       />
-                      <span className="text-sm text-[#b3b3b3] group-hover:text-white transition-colors">{cat.label}</span>
+                      <span className="text-sm text-[#b3b3b3] group-hover:text-white transition-colors">
+                        {cat.label}
+                      </span>
                     </label>
                   ))}
                 </div>
@@ -206,7 +172,7 @@ const Sidebar = ({ isOpen, onClose, onFilterChange, activeFilters }: SidebarProp
             </div>
           )}
 
-          {/* Platform */}
+          {/* ── Platform ─────────────────────────────────────────────────── */}
           {platforms.length > 0 && (
             <div className="space-y-1">
               <div className="flex items-center justify-between">
@@ -214,15 +180,13 @@ const Sidebar = ({ isOpen, onClose, onFilterChange, activeFilters }: SidebarProp
                 <button onClick={() => toggleSection('features')} className="p-1 hover:bg-[#1a1a1a] rounded">
                   <svg
                     className={`w-4 h-4 text-[#8c8c8c] transition-transform ${expandedSections.features ? 'rotate-180' : ''}`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24"
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
               </div>
-              
+
               {expandedSections.features && (
                 <div className="space-y-1">
                   {platforms.map((platform: any) => (
@@ -232,11 +196,13 @@ const Sidebar = ({ isOpen, onClose, onFilterChange, activeFilters }: SidebarProp
                     >
                       <input
                         type="checkbox"
-                        checked={selectedFilters.platformType.includes(platform.value)}
+                        checked={!!(activeFilters.platformType?.includes(platform.value))}
                         onChange={(e) => handleFilterChange('platformType', platform.value, e.target.checked)}
                         className="w-4 h-4 flex-shrink-0 bg-[#0a0a0a] border-[#404040] rounded text-[#8a1212] focus:ring-[#8a1212]"
                       />
-                      <span className="text-sm text-[#b3b3b3] group-hover:text-white transition-colors">{platform.label}</span>
+                      <span className="text-sm text-[#b3b3b3] group-hover:text-white transition-colors capitalize">
+                        {platform.label}
+                      </span>
                     </label>
                   ))}
                 </div>
@@ -244,7 +210,7 @@ const Sidebar = ({ isOpen, onClose, onFilterChange, activeFilters }: SidebarProp
             </div>
           )}
 
-          {/* Target Users */}
+          {/* ── Target Users ─────────────────────────────────────────────── */}
           {audiences.length > 0 && (
             <div className="space-y-1">
               <div className="flex items-center justify-between">
@@ -252,15 +218,13 @@ const Sidebar = ({ isOpen, onClose, onFilterChange, activeFilters }: SidebarProp
                 <button onClick={() => toggleSection('targetUsers')} className="p-1 hover:bg-[#1a1a1a] rounded">
                   <svg
                     className={`w-4 h-4 text-[#8c8c8c] transition-transform ${expandedSections.targetUsers ? 'rotate-180' : ''}`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24"
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
               </div>
-              
+
               {expandedSections.targetUsers && (
                 <div className="space-y-1">
                   {audiences.map((audience: any) => (
@@ -270,11 +234,13 @@ const Sidebar = ({ isOpen, onClose, onFilterChange, activeFilters }: SidebarProp
                     >
                       <input
                         type="checkbox"
-                        checked={selectedFilters.targetAudience.includes(audience.value)}
+                        checked={!!(activeFilters.targetAudience?.includes(audience.value))}
                         onChange={(e) => handleFilterChange('targetAudience', audience.value, e.target.checked)}
                         className="w-4 h-4 flex-shrink-0 bg-[#0a0a0a] border-[#404040] rounded text-[#8a1212] focus:ring-[#8a1212]"
                       />
-                      <span className="text-sm text-[#b3b3b3] group-hover:text-white transition-colors">{audience.label}</span>
+                      <span className="text-sm text-[#b3b3b3] group-hover:text-white transition-colors">
+                        {audience.label}
+                      </span>
                     </label>
                   ))}
                 </div>
@@ -282,7 +248,7 @@ const Sidebar = ({ isOpen, onClose, onFilterChange, activeFilters }: SidebarProp
             </div>
           )}
 
-          {/* Pricing */}
+          {/* ── Pricing ──────────────────────────────────────────────────── */}
           {pricingTypes.length > 0 && (
             <div className="space-y-1 pb-4">
               <div className="flex items-center justify-between">
@@ -290,9 +256,7 @@ const Sidebar = ({ isOpen, onClose, onFilterChange, activeFilters }: SidebarProp
                 <button onClick={() => toggleSection('pricing')} className="p-1 hover:bg-[#1a1a1a] rounded">
                   <svg
                     className={`w-4 h-4 text-[#8c8c8c] transition-transform ${expandedSections.pricing ? 'rotate-180' : ''}`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24"
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
@@ -308,7 +272,7 @@ const Sidebar = ({ isOpen, onClose, onFilterChange, activeFilters }: SidebarProp
                     >
                       <input
                         type="checkbox"
-                        checked={selectedFilters.pricingType.includes(type.value)}
+                        checked={!!(activeFilters.pricingType?.includes(type.value))}
                         onChange={(e) => handleFilterChange('pricingType', type.value, e.target.checked)}
                         className="w-4 h-4 flex-shrink-0 bg-[#0a0a0a] border-[#404040] rounded text-[#8a1212] focus:ring-[#8a1212]"
                       />
@@ -321,6 +285,7 @@ const Sidebar = ({ isOpen, onClose, onFilterChange, activeFilters }: SidebarProp
               )}
             </div>
           )}
+
         </div>
       </aside>
     </>

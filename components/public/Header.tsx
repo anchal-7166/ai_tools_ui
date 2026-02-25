@@ -75,7 +75,7 @@ const Header = ({ onSidebarToggle, onSearch }: HeaderProps) => {
               </span>
             </h1>
             <p className="text-[10px] lg:text-xs text-neutral-500 mt-0.5 hidden lg:block">
-              Explore, compare, and find perfect AI solutions
+              Explore, compare, and find perfect AI solution for your tasks.
             </p>
           </div>
 

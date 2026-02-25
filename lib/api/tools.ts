@@ -107,4 +107,10 @@ export const toolsApi = {
     return data;
   },
 
+  // POST /tools/:id/favorite  — toggles favorite for the logged-in user
+  toggleFavorite: async (id: string): Promise<{ favorited: boolean; favoriteCount: number }> => {
+    const { data } = await apiClient.post(`/tools/${id}/favorite`);
+    return data;
+  },
+
 };

@@ -3,16 +3,16 @@
 import { useState } from 'react';
 
 const profileData = {
-  name: 'John Doe',
-  username: 'johndoe',
-  email: 'john.doe@example.com',
+  name: 'Anchal',
+  username: 'anch123',
+  email: 'anchal@example.com',
   bio: 'AI enthusiast and indie developer. I build tools that help people work smarter. Open to collaborations and feedback.',
   location: 'San Francisco, CA',
   website: 'https://johndoe.dev',
   twitter: 'johndoe',
   github: 'johndoe',
   joinedAt: '2024-06-12',
-  avatar: 'JD',
+  avatar: 'A',
   role: 'Developer',
   toolsPublished: 9,
   totalViews: '23.5k',

@@ -1,4 +1,5 @@
-import SubmitToolPage from '@/components/dashboard/tools/SubmitTool'
+
+import SubmitToolPage from '@/components/dashboard/submit/page'
 import React from 'react'
 
 const page = () => {

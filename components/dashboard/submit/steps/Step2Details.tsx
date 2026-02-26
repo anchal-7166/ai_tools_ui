@@ -17,6 +17,8 @@ export default function Step2Details({
   form, set, toggleArr,
   platformTypeOptions, targetAudienceOptions,
 }: Props) {
+
+
   return (
     <div className="p-4 sm:p-6 rounded-xl flex flex-col gap-4 sm:gap-6" style={cardBase}>
       <div>

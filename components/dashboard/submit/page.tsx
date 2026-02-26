@@ -15,7 +15,6 @@ import Step6Review from './steps/Step6Review';
 
 export default function SubmitToolPage() {
 
-  // ── Form state (pure local state — no API calls) ──────────────────────
   const {
     step, setStep,
     form, set, toggleArr, resetForm,
@@ -25,7 +24,6 @@ export default function SubmitToolPage() {
     allValid, completeness,
   } = useFormState();
 
-  // ── API data + submission mutation ────────────────────────────────────
   const {
     categories, tags, industries, useCases,
     platformTypeOptions, targetAudienceOptions,
@@ -45,6 +43,7 @@ export default function SubmitToolPage() {
     // Run client-side UUID validation BEFORE the API call.
     // Catches stale IDs that would be rejected by the backend @IsUUID() validators.
     const errors = validateBeforeSubmit(form);
+    console.log(errors)
     if (errors.length > 0) {
       setPreflightErrors(errors);
       return;
@@ -94,8 +93,8 @@ export default function SubmitToolPage() {
       {/* ── Page Header ─────────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-lg sm:text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
-            Submit a Tool
+          <h1 className="text-lg sm:text-xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
+            Submit Your Tool
           </h1>
           <p className="text-xs sm:text-sm mt-0.5 leading-relaxed" style={{ color: 'var(--color-text-muted)' }}>
             Fill in the details below. Your tool will be reviewed within 2–3 business days.
@@ -122,10 +121,10 @@ export default function SubmitToolPage() {
         </div>
       </div>
 
-      {/* ── Step Indicator ──────────────────────────────────────────────── */}
+      {/* ── Step Indicator ─ */}
       <StepIndicator step={step} onStepClick={setStep} />
 
-      {/* ── Active Step ─────────────────────────────────────────────────── */}
+      {/* ── Active Step ── */}
       {step === 1 && (
         <Step1BasicInfo form={form} set={set} />
       )}

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { submissionsApi } from '../api/submissions';
 import { toast } from 'sonner';
+import { useAuthStore } from '../store/auth-store';
 
 export function useCreateSubmission() {
   const queryClient = useQueryClient();
@@ -32,5 +33,15 @@ export function useSubmissionById(id: string) {
     queryFn: () => submissionsApi.getById(id),
     enabled: !!id,
     staleTime: 1000 * 60 * 5,
+  });
+}
+
+export function useMyPendingTools(params: { page?: number; limit?: number } = {}) {
+  const { isAuthenticated } = useAuthStore();
+  return useQuery({
+    queryKey: ['submissions', 'my', 'pending', params],
+    queryFn: () => submissionsApi.getMyPending(params),
+    enabled: isAuthenticated,
+    staleTime: 30000,
   });
 }

@@ -6,9 +6,14 @@ import { FormData, CreateSubmissionPayload, ApiUseCase } from '../renders/types'
 import { useCreateSubmission } from '@/lib/hooks/use-submissions';
 
 // ── UUID v4 validator ─────────────────────────────────────────────────────
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const isUUID  = (v: string) => UUID_RE.test(v);
-const filterUUIDs = (arr: string[]): string[] => arr.filter(isUUID);
+// const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+// const isUUID  = (v: string) => UUID_RE.test(v);
+// const filterUUIDs = (arr: string[]): string[] => arr.filter(isUUID);
+
+// ── ID validator — accepts standard UUIDs + custom prefixed IDs
+// e.g. cat-0000-0000-0000-000000000001, tag-xxxx, etc.
+const isValidId   = (v: string) => v.trim().length > 0;
+const filterUUIDs = (arr: string[]): string[] => arr.filter(isValidId);
 
 // ── Pre-flight validation ─────────────────────────────────────────────────
 // Call this BEFORE mutate() to catch stale/invalid IDs on the client,
@@ -16,21 +21,19 @@ const filterUUIDs = (arr: string[]): string[] => arr.filter(isUUID);
 export function validateBeforeSubmit(form: FormData): string[] {
   const errors: string[] = [];
 
-  if (form.categoryIds.some(id => !isUUID(id)))
-    errors.push('Invalid category selection — please open Step 3 and reselect your categories.');
-  if (form.tagIds.some(id => !isUUID(id)))
-    errors.push('Invalid tag selection — please open Step 3 and reselect your tags.');
-  if (form.useCaseIds.some(id => !isUUID(id)))
-    errors.push('Invalid use case selection — please open Step 3 and reselect your use cases.');
-  if (form.industryIds.some(id => !isUUID(id)))
-    errors.push('Invalid industry selection — please open Step 3 and reselect your industries.');
+  // if (form.categoryIds.some(id => !isUUID(id)))
+  //   errors.push('Invalid category selection — please open Step 3 and reselect your categories.');
+  // if (form.tagIds.some(id => !isUUID(id)))
+  //   errors.push('Invalid tag selection — please open Step 3 and reselect your tags.');
+  // if (form.useCaseIds.some(id => !isUUID(id)))
+  //   errors.push('Invalid use case selection — please open Step 3 and reselect your use cases.');
+  // if (form.industryIds.some(id => !isUUID(id)))
+  //   errors.push('Invalid industry selection — please open Step 3 and reselect your industries.');
 
   return errors;
 }
 
 export function useSubmitTool() {
-
-  // ── Remote data ───────────────────────────────────────────────────────
   const {
     categories,
     tags,

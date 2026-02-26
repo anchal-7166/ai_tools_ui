@@ -195,3 +195,40 @@ export function useToggleFavorite() {
     },
   });
 }
+
+
+export function useCheckFavorite(toolId: string) {
+  const { isAuthenticated } = useAuthStore();
+
+  return useQuery({
+    queryKey: ['tools', 'favorite', toolId],
+    queryFn: () => toolsApi.checkFavorite(toolId),
+    enabled: !!toolId && isAuthenticated, 
+    staleTime: 60000,
+  });
+}
+
+
+export function useMyPublishedTools(params: { page?: number; limit?: number } = {}) {
+  const { isAuthenticated } = useAuthStore();
+
+  return useQuery({
+    queryKey: ['tools', 'my', 'published', params],
+    queryFn: () => toolsApi.getMyPublished(params),
+    enabled: isAuthenticated,
+    staleTime: 30000,
+  });
+}
+
+
+
+export function useMySavedTools(params: { page?: number; limit?: number } = {}) {
+  const { isAuthenticated } = useAuthStore();
+
+  return useQuery({
+    queryKey: ['tools', 'my', 'saved', params],
+    queryFn: () => toolsApi.getMySaved(params),
+    enabled: isAuthenticated,
+    staleTime: 30000,
+  });
+}

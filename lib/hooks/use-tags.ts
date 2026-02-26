@@ -1,5 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { tagsApi } from '../api/tags';
+import { useAuthStore } from '../store/auth-store';
+import { toolsApi } from '../api/tools';
 
 export function useTags() {
   return useQuery({
@@ -37,3 +39,5 @@ export function usePopularTags(limit: number = 10) {
     isLoading,
   };
 }
+
+

@@ -11,7 +11,7 @@ interface Props {
   categories:  { id: string; name: string }[];
   tags:        { id: string; name: string }[];
   industries:  { id: string; name: string }[];
-  useCases:    { id: string; name: string }[];  // already normalised (title → name)
+  useCases:    { id: string; name: string }[];  
   loading: boolean;
 }
 
@@ -20,6 +20,7 @@ export default function Step3Categories({
   categories, tags, industries, useCases,
   loading,
 }: Props) {
+
   return (
     <div className="flex flex-col gap-3 sm:gap-4">
 

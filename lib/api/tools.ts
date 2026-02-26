@@ -113,4 +113,22 @@ export const toolsApi = {
     return data;
   },
 
+  async checkFavorite(toolId: string): Promise<{ isFavorited: boolean }> {
+    const res = await apiClient.get(`/tools/${toolId}/favorite/check`);
+    return res.data;
+  },
+
+
+  // 1. Get all published tools by logged-in user
+ getMyPublished: async (params: { page?: number; limit?: number } = {}): Promise<ToolsResponse> => {
+  const { data } = await apiClient.get<ToolsResponse>('/tools/my/published', { params });
+  return data;
+},
+
+// 3. Get all saved/favorited tools by logged-in user
+getMySaved: async (params: { page?: number; limit?: number } = {}): Promise<ToolsResponse> => {
+  const { data } = await apiClient.get<ToolsResponse>('/tools/my/saved', { params });
+  return data;
+},
+
 };

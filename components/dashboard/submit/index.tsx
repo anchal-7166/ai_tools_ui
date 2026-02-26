@@ -197,7 +197,7 @@ export function TagInput({
 // ── EntitySelect — real API data with loading skeleton ───────────────────
 // UUID guard: only IDs matching standard UUID format are passed to onToggle.
 // This prevents stale/non-UUID values from ever entering form state.
-const ENTITY_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+// const ENTITY_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export function EntitySelect({
   options, selected, onToggle, max, placeholder, loading = false,
 }: {
@@ -242,7 +242,7 @@ export function EntitySelect({
                 if (disabled) return;
                 // Guard: silently skip if ID is not a valid UUID.
                 // Protects against stale options with non-UUID IDs.
-                if (!ENTITY_UUID_RE.test(o.id)) return;
+                // if (!ENTITY_UUID_RE.test(o.id)) return;
                 onToggle(o.id);
               }}
               className="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full text-[10px] sm:text-xs font-semibold transition-all"

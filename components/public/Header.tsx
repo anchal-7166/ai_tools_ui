@@ -56,9 +56,9 @@ const Header = ({ onSidebarToggle, onSearch }: HeaderProps) => {
             {/* Logo + Title */}
             <Link href="/" className="flex items-center gap-2 sm:gap-3 group">
               <img 
-                src="/aitool3.png" 
+                src="/logo44.png" 
                 alt="AI Tool Store" 
-                className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 object-contain" 
+                className="w-10 h-10 sm:w-12 sm:h-12 lg:w-17 lg:h-17 object-contain" 
               />
               <span className="font-bold text-sm sm:text-base lg:text-lg text-white whitespace-nowrap">
                 AI Tool Store

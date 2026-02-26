@@ -1,41 +1,29 @@
 'use client';
 
-import { useState } from 'react';
+import { useChangePassword, useDeactivateAccount, useMe, useUpdateMe } from '@/lib/hooks/use-user';
+import { useState, useEffect } from 'react';
 
-const profileData = {
-  name: 'Anchal',
-  username: 'anch123',
-  email: 'anchal@example.com',
-  bio: 'AI enthusiast and indie developer. I build tools that help people work smarter. Open to collaborations and feedback.',
-  location: 'San Francisco, CA',
-  website: 'https://johndoe.dev',
-  twitter: 'johndoe',
-  github: 'johndoe',
-  joinedAt: '2024-06-12',
-  avatar: 'A',
-  role: 'Developer',
-  toolsPublished: 9,
-  totalViews: '23.5k',
-  avgRating: 4.8,
-  savedTools: 24,
-};
 
 const tabs = ['General', 'Security', 'Notifications', 'Danger Zone'];
 
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState('General');
   const [isEditing, setIsEditing] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState('');
+
+  const { data: me, isLoading } = useMe();
+  const { mutate: updateMe, isPending: isSaving } = useUpdateMe();
+  const { mutate: changePassword, isPending: isChangingPassword } = useChangePassword();
+  const { mutate: deactivate, isPending: isDeactivating } = useDeactivateAccount();
 
   const [form, setForm] = useState({
-    name: profileData.name,
-    username: profileData.username,
-    email: profileData.email,
-    bio: profileData.bio,
-    location: profileData.location,
-    website: profileData.website,
-    twitter: profileData.twitter,
-    github: profileData.github,
+    firstName: '',
+    lastName: '',
+    username: '',
+    email: '',
+    bio: '',
+    industry: '',
+    jobRole: '',
   });
 
   const [passwords, setPasswords] = useState({
@@ -43,6 +31,8 @@ export default function ProfilePage() {
     newPass: '',
     confirm: '',
   });
+
+  const [passwordError, setPasswordError] = useState('');
 
   const [notifications, setNotifications] = useState({
     reviewApproved: true,
@@ -53,13 +43,68 @@ export default function ProfilePage() {
     productUpdates: true,
   });
 
-  const [deleteConfirm, setDeleteConfirm] = useState('');
+  // Populate form when data loads
+  useEffect(() => {
+    if (me) {
+      setForm({
+        firstName: me.firstName ?? '',
+        lastName: me.lastName ?? '',
+        username: me.username ?? '',
+        email: me.email ?? '',
+        bio: me.bio ?? '',
+        industry: me.industry ?? '',
+        jobRole: me.jobRole ?? '',
+      });
+    }
+  }, [me]);
 
   const handleSave = () => {
-    setSaved(true);
-    setIsEditing(false);
-    setTimeout(() => setSaved(false), 3000);
+    updateMe(
+      {
+        firstName: form.firstName || undefined,
+        lastName: form.lastName || undefined,
+        username: form.username || undefined,
+        bio: form.bio || undefined,
+        industry: form.industry || undefined,
+        jobRole: form.jobRole || undefined,
+      },
+      { onSuccess: () => setIsEditing(false) }
+    );
   };
+
+  const handleCancel = () => {
+    if (me) {
+      setForm({
+        firstName: me.firstName ?? '',
+        lastName: me.lastName ?? '',
+        username: me.username ?? '',
+        email: me.email ?? '',
+        bio: me.bio ?? '',
+        industry: me.industry ?? '',
+        jobRole: me.jobRole ?? '',
+      });
+    }
+    setIsEditing(false);
+  };
+
+  const handleChangePassword = () => {
+    setPasswordError('');
+    if (passwords.newPass !== passwords.confirm) {
+      setPasswordError('New passwords do not match.');
+      return;
+    }
+    if (passwords.newPass.length < 8) {
+      setPasswordError('New password must be at least 8 characters.');
+      return;
+    }
+    changePassword(
+      { currentPassword: passwords.current, newPassword: passwords.newPass },
+      { onSuccess: () => setPasswords({ current: '', newPass: '', confirm: '' }) }
+    );
+  };
+
+  const displayName = me ? `${me.firstName ?? ''} ${me.lastName ?? ''}`.trim() || me.username || me.email : '—';
+  const avatarLetter = displayName.charAt(0).toUpperCase();
 
   const inputStyle = (disabled = false): React.CSSProperties => ({
     backgroundColor: disabled ? 'var(--color-bg-secondary)' : 'var(--color-bg-tertiary)',
@@ -91,60 +136,46 @@ export default function ProfilePage() {
     padding: '1.25rem',
   };
 
-  return (
-    <div className="space-y-6 animate-fade-in">
-
-      {/* Page Header */}
-      <div className="flex items-center justify-between">
-
-        {saved && (
-          <div
-            className="flex items-center gap-2 px-3 py-2 rounded-lg animate-fade-in"
-            style={{
-              backgroundColor: 'rgba(138, 18, 18, 0.12)',
-              border: '1px solid var(--color-primary)',
-            }}
-          >
-            <svg className="w-4 h-4" style={{ color: 'var(--color-primary-light)' }} fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-            </svg>
-            <span className="text-sm font-semibold" style={{ color: 'var(--color-primary-light)' }}>
-              Changes saved
-            </span>
-          </div>
-        )}
+  // ── Loading skeleton ──
+  if (isLoading) {
+    return (
+      <div className="space-y-5 animate-pulse">
+        <div className="h-44 rounded-lg" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border)' }} />
+        <div className="h-10 rounded-lg" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border)' }} />
+        <div className="h-64 rounded-lg" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border)' }} />
       </div>
+    );
+  }
 
-      {/* Profile Card */}
+  return (
+    <div className="space-y-5 sm:space-y-6 animate-fade-in">
+
+      {/* ── Profile Card ── */}
       <div style={sectionStyle}>
-        <div className="flex items-start gap-5 flex-wrap">
+        <div className="flex items-start gap-4 sm:gap-5 flex-wrap">
+
           {/* Avatar */}
           <div className="relative shrink-0">
             <div
-              className="w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold"
+              className="w-14 h-14 sm:w-14 sm:h-14 rounded-full bg-red-800  flex items-center justify-center text-xl sm:text-2xl font-bold"
               style={{
-                background: 'linear-gradient(135deg, var(--color-primary), var(--color-primary-dark))',
-                color: 'var(--color-text-primary)',
+                // background: me?.avatar
+                //   ? undefined
+                //   : 'linear-gradient(135deg, var(--color-primary), var(--color-primary-dark))',
+                // color: 'var(--color-text-primary)',
+                backgroundImage: me?.avatar ? `url(${me.avatar})` : undefined,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
               }}
             >
-              {profileData.avatar}
+              {!me?.avatar && avatarLetter}
             </div>
             {isEditing && (
               <button
                 className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full flex items-center justify-center transition-all"
-                style={{
-                  backgroundColor: 'var(--color-bg-tertiary)',
-                  border: '2px solid var(--color-border)',
-                  color: 'var(--color-text-muted)',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--color-primary)';
-                  e.currentTarget.style.color = 'var(--color-primary-light)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--color-border)';
-                  e.currentTarget.style.color = 'var(--color-text-muted)';
-                }}
+                style={{ backgroundColor: 'var(--color-bg-tertiary)', border: '2px solid var(--color-border)', color: 'var(--color-text-muted)' }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.color = 'var(--color-primary-light)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.color = 'var(--color-text-muted)'; }}
                 title="Change avatar"
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -158,80 +189,79 @@ export default function ProfilePage() {
           {/* Name + meta */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>
-                {form.name}
+              <h2 className="text-base sm:text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>
+                {displayName}
               </h2>
-              <span
-                className="px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide"
-                style={{
-                  backgroundColor: 'rgba(138, 18, 18, 0.12)',
-                  color: 'var(--color-primary-light)',
-                  border: '1px solid var(--color-primary)',
-                }}
-              >
-                {profileData.role}
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide"
+                style={{ backgroundColor: 'rgba(138,18,18,0.12)', color: 'var(--color-primary-light)', border: '1px solid var(--color-primary)' }}>
+                {me?.role ?? 'USER'}
               </span>
+              {me?.isVerified && (
+                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold"
+                  style={{ backgroundColor: 'rgba(34,197,94,0.1)', color: 'rgb(34,197,94)', border: '1px solid rgba(34,197,94,0.3)' }}>
+                  <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  Verified
+                </span>
+              )}
             </div>
-            <p className="text-sm mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
-              @{form.username}
-            </p>
-            <p className="text-sm mt-2 leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
-              {form.bio}
-            </p>
-            <div className="flex items-center gap-4 mt-3 flex-wrap">
-              {form.location && (
+
+            {me?.username && (
+              <p className="text-xs sm:text-sm mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
+                @{me.username}
+              </p>
+            )}
+
+            {me?.bio && (
+              <p className="text-xs sm:text-sm mt-2 leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+                {me.bio}
+              </p>
+            )}
+
+            <div className="flex items-center gap-3 sm:gap-4 mt-2 sm:mt-3 flex-wrap">
+              {me?.jobRole && (
                 <span className="flex items-center gap-1 text-xs" style={{ color: 'var(--color-text-muted)' }}>
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
-                  {form.location}
+                  {me.jobRole}
+                </span>
+              )}
+              {me?.industry && (
+                <span className="flex items-center gap-1 text-xs" style={{ color: 'var(--color-text-muted)' }}>
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
+                  {me.industry}
                 </span>
               )}
               <span className="flex items-center gap-1 text-xs" style={{ color: 'var(--color-text-muted)' }}>
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                Joined {new Date(profileData.joinedAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                Joined {me?.createdAt ? new Date(me.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : '—'}
               </span>
             </div>
           </div>
 
-          {/* Edit toggle */}
+          {/* Edit / Save toggle */}
           <button
             onClick={() => isEditing ? handleSave() : setIsEditing(true)}
-            className="px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all shrink-0"
+            disabled={isSaving}
+            className="px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold flex items-center gap-2 transition-all shrink-0"
             style={
               isEditing
-                ? {
-                    background: 'linear-gradient(to right, var(--color-primary), var(--color-primary-dark))',
-                    color: 'var(--color-text-primary)',
-                  }
-                : {
-                    backgroundColor: 'var(--color-bg-tertiary)',
-                    color: 'var(--color-text-secondary)',
-                    border: '1px solid var(--color-border)',
-                  }
+                ? { background: 'linear-gradient(to right, var(--color-primary), var(--color-primary-dark))', color: '#fff', opacity: isSaving ? 0.7 : 1 }
+                : { backgroundColor: 'var(--color-bg-tertiary)', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }
             }
-            onMouseEnter={(e) => {
-              if (!isEditing) {
-                e.currentTarget.style.color = 'var(--color-text-primary)';
-                e.currentTarget.style.borderColor = 'var(--color-border-light)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!isEditing) {
-                e.currentTarget.style.color = 'var(--color-text-secondary)';
-                e.currentTarget.style.borderColor = 'var(--color-border)';
-              }
-            }}
           >
             {isEditing ? (
               <>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                Save Changes
+                {isSaving ? 'Saving…' : 'Save Changes'}
               </>
             ) : (
               <>
@@ -244,43 +274,36 @@ export default function ProfilePage() {
           </button>
         </div>
 
-        {/* Stats row */}
-        <div
-          className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-5 pt-5"
-          style={{ borderTop: '1px solid var(--color-border)' }}
-        >
+        {/* Stats */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-4 sm:mt-5 pt-4 sm:pt-5"
+          style={{ borderTop: '1px solid var(--color-border)' }}>
           {[
-            { label: 'Tools Published', value: profileData.toolsPublished },
-            { label: 'Total Views', value: profileData.totalViews },
-            { label: 'Avg. Rating', value: profileData.avgRating },
-            { label: 'Saved Tools', value: profileData.savedTools },
+            { label: 'Member Since', value: me?.createdAt ? new Date(me.createdAt).getFullYear() : '—' },
+            { label: 'Last Login', value: me?.lastLoginAt ? new Date(me.lastLoginAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'N/A' },
+            { label: 'Industry', value: me?.industry ?? '—' },
+            { label: 'Job Role', value: me?.jobRole ?? '—' },
           ].map((stat) => (
             <div key={stat.label} className="text-center">
-              <p className="text-xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{stat.value}</p>
-              <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>{stat.label}</p>
+              <p className="text-sm sm:text-base font-bold truncate" style={{ color: 'var(--color-text-primary)' }}>{stat.value}</p>
+              <p className="text-[10px] sm:text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>{stat.label}</p>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Tabs */}
-      <div
-        className="flex gap-1 p-1 rounded-lg"
-        style={{ backgroundColor: 'var(--color-bg-tertiary)', border: '1px solid var(--color-border)' }}
-      >
+      {/* ── Tabs ── */}
+      <div className="flex gap-1 p-1 rounded-lg overflow-x-auto no-scrollbar"
+        style={{ backgroundColor: 'var(--color-bg-tertiary)', border: '1px solid var(--color-border)' }}>
         {tabs.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className="flex-1 py-2 px-3 rounded-md text-xs font-semibold transition-all"
+          <button key={tab} onClick={() => setActiveTab(tab)}
+            className="flex-1 py-1.5 sm:py-2 px-2 sm:px-3 rounded-md text-[10px] sm:text-xs font-semibold transition-all whitespace-nowrap shrink-0"
             style={{
               backgroundColor: activeTab === tab ? 'var(--color-bg-card)' : 'transparent',
               color: activeTab === tab
                 ? tab === 'Danger Zone' ? 'var(--color-error)' : 'var(--color-text-primary)'
                 : 'var(--color-text-muted)',
               border: activeTab === tab ? '1px solid var(--color-border)' : '1px solid transparent',
-            }}
-          >
+            }}>
             {tab}
           </button>
         ))}
@@ -289,20 +312,26 @@ export default function ProfilePage() {
       {/* ── GENERAL TAB ── */}
       {activeTab === 'General' && (
         <div className="space-y-4 animate-fade-in">
-
-          {/* Personal Info */}
           <div style={sectionStyle}>
-            <h3 className="text-sm font-bold mb-4" style={{ color: 'var(--color-text-primary)' }}>
+            <h3 className="text-xs sm:text-sm font-bold mb-4" style={{ color: 'var(--color-text-primary)' }}>
               Personal Information
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+
               <div>
-                <label style={labelStyle}>Full Name</label>
-                <input
-                  type="text"
-                  value={form.name}
-                  disabled={!isEditing}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                <label style={labelStyle}>First Name</label>
+                <input type="text" value={form.firstName} disabled={!isEditing}
+                  onChange={(e) => setForm({ ...form, firstName: e.target.value })}
+                  style={inputStyle(!isEditing)}
+                  onFocus={(e) => { if (isEditing) e.currentTarget.style.borderColor = 'var(--color-primary)'; }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)'; }}
+                />
+              </div>
+
+              <div>
+                <label style={labelStyle}>Last Name</label>
+                <input type="text" value={form.lastName} disabled={!isEditing}
+                  onChange={(e) => setForm({ ...form, lastName: e.target.value })}
                   style={inputStyle(!isEditing)}
                   onFocus={(e) => { if (isEditing) e.currentTarget.style.borderColor = 'var(--color-primary)'; }}
                   onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)'; }}
@@ -312,16 +341,8 @@ export default function ProfilePage() {
               <div>
                 <label style={labelStyle}>Username</label>
                 <div className="relative">
-                  <span
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-sm"
-                    style={{ color: 'var(--color-text-muted)' }}
-                  >
-                    @
-                  </span>
-                  <input
-                    type="text"
-                    value={form.username}
-                    disabled={!isEditing}
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm" style={{ color: 'var(--color-text-muted)' }}>@</span>
+                  <input type="text" value={form.username} disabled={!isEditing}
                     onChange={(e) => setForm({ ...form, username: e.target.value })}
                     style={{ ...inputStyle(!isEditing), paddingLeft: '1.75rem' }}
                     onFocus={(e) => { if (isEditing) e.currentTarget.style.borderColor = 'var(--color-primary)'; }}
@@ -332,11 +353,29 @@ export default function ProfilePage() {
 
               <div>
                 <label style={labelStyle}>Email Address</label>
-                <input
-                  type="email"
-                  value={form.email}
-                  disabled={!isEditing}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                <input type="email" value={form.email} disabled
+                  style={inputStyle(true)}
+                  title="Email cannot be changed"
+                />
+                <p className="text-[10px] mt-1" style={{ color: 'var(--color-text-muted)' }}>Email cannot be changed.</p>
+              </div>
+
+              <div>
+                <label style={labelStyle}>Industry</label>
+                <input type="text" value={form.industry} disabled={!isEditing}
+                  placeholder="e.g. Marketing, Development"
+                  onChange={(e) => setForm({ ...form, industry: e.target.value })}
+                  style={inputStyle(!isEditing)}
+                  onFocus={(e) => { if (isEditing) e.currentTarget.style.borderColor = 'var(--color-primary)'; }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)'; }}
+                />
+              </div>
+
+              <div>
+                <label style={labelStyle}>Job Role</label>
+                <input type="text" value={form.jobRole} disabled={!isEditing}
+                  placeholder="e.g. Developer, Designer"
+                  onChange={(e) => setForm({ ...form, jobRole: e.target.value })}
                   style={inputStyle(!isEditing)}
                   onFocus={(e) => { if (isEditing) e.currentTarget.style.borderColor = 'var(--color-primary)'; }}
                   onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)'; }}
@@ -345,136 +384,29 @@ export default function ProfilePage() {
 
               <div className="sm:col-span-2 lg:col-span-3">
                 <label style={labelStyle}>Bio</label>
-                <textarea
-                  rows={3}
-                  value={form.bio}
-                  disabled={!isEditing}
+                <textarea rows={3} value={form.bio} disabled={!isEditing}
                   onChange={(e) => setForm({ ...form, bio: e.target.value })}
                   style={{ ...inputStyle(!isEditing), resize: 'vertical', minHeight: '80px' }}
                   onFocus={(e) => { if (isEditing) e.currentTarget.style.borderColor = 'var(--color-primary)'; }}
                   onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)'; }}
                 />
               </div>
-
-              <div>
-                <label style={labelStyle}>Location</label>
-                <input
-                  type="text"
-                  value={form.location}
-                  disabled={!isEditing}
-                  onChange={(e) => setForm({ ...form, location: e.target.value })}
-                  style={inputStyle(!isEditing)}
-                  onFocus={(e) => { if (isEditing) e.currentTarget.style.borderColor = 'var(--color-primary)'; }}
-                  onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)'; }}
-                />
-              </div>
-
-              <div>
-                <label style={labelStyle}>Website</label>
-                <input
-                  type="url"
-                  value={form.website}
-                  disabled={!isEditing}
-                  onChange={(e) => setForm({ ...form, website: e.target.value })}
-                  style={inputStyle(!isEditing)}
-                  onFocus={(e) => { if (isEditing) e.currentTarget.style.borderColor = 'var(--color-primary)'; }}
-                  onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)'; }}
-                />
-              </div>
             </div>
           </div>
 
-          {/* Social Links */}
-          <div style={sectionStyle}>
-            <h3 className="text-sm font-bold mb-4" style={{ color: 'var(--color-text-primary)' }}>
-              Social Links
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {[
-                {
-                  key: 'twitter',
-                  label: 'X / Twitter',
-                  prefix: 'x.com/',
-                  icon: (
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                    </svg>
-                  ),
-                },
-                {
-                  key: 'github',
-                  label: 'GitHub',
-                  prefix: 'github.com/',
-                  icon: (
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                      <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
-                    </svg>
-                  ),
-                },
-              ].map((social) => (
-                <div key={social.key}>
-                  <label style={labelStyle}>{social.label}</label>
-                  <div className="flex items-center">
-                    <div
-                      className="flex items-center gap-2 px-3 shrink-0 text-xs"
-                      style={{
-                        backgroundColor: 'var(--color-bg-secondary)',
-                        borderTop: '1px solid var(--color-border)',
-                        borderBottom: '1px solid var(--color-border)',
-                        borderLeft: '1px solid var(--color-border)',
-                        borderRight: 'none',
-                        color: 'var(--color-text-muted)',
-                        height: '2.25rem',
-                        borderRadius: '0.5rem 0 0 0.5rem',
-                      }}
-                    >
-                      <span style={{ color: 'var(--color-text-muted)' }}>{social.icon}</span>
-                      {social.prefix}
-                    </div>
-                    <input
-                      type="text"
-                      value={(form as any)[social.key]}
-                      disabled={!isEditing}
-                      onChange={(e) => setForm({ ...form, [social.key]: e.target.value })}
-                      style={{
-                        ...inputStyle(!isEditing),
-                        borderRadius: '0 0.5rem 0.5rem 0',
-                        borderLeft: 'none',
-                      }}
-                      onFocus={(e) => { if (isEditing) e.currentTarget.style.borderColor = 'var(--color-primary)'; }}
-                      onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)'; }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Action row */}
           {isEditing && (
             <div className="flex items-center gap-3 justify-end animate-fade-in">
-              <button
-                onClick={() => setIsEditing(false)}
+              <button onClick={handleCancel}
                 className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
-                style={{
-                  backgroundColor: 'var(--color-bg-tertiary)',
-                  color: 'var(--color-text-secondary)',
-                  border: '1px solid var(--color-border)',
-                }}
+                style={{ backgroundColor: 'var(--color-bg-tertiary)', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }}
                 onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-text-primary)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-text-secondary)'; }}
-              >
+                onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-text-secondary)'; }}>
                 Cancel
               </button>
-              <button
-                onClick={handleSave}
+              <button onClick={handleSave} disabled={isSaving}
                 className="px-4 py-2 rounded-lg text-sm font-semibold transition-all"
-                style={{
-                  background: 'linear-gradient(to right, var(--color-primary), var(--color-primary-dark))',
-                  color: 'var(--color-text-primary)',
-                }}
-              >
-                Save Changes
+                style={{ background: 'linear-gradient(to right, var(--color-primary), var(--color-primary-dark))', color: '#fff', opacity: isSaving ? 0.7 : 1 }}>
+                {isSaving ? 'Saving…' : 'Save Changes'}
               </button>
             </div>
           )}
@@ -484,13 +416,11 @@ export default function ProfilePage() {
       {/* ── SECURITY TAB ── */}
       {activeTab === 'Security' && (
         <div className="space-y-4 animate-fade-in">
-
-          {/* Change Password */}
           <div style={sectionStyle}>
-            <h3 className="text-sm font-bold mb-4" style={{ color: 'var(--color-text-primary)' }}>
+            <h3 className="text-xs sm:text-sm font-bold mb-4" style={{ color: 'var(--color-text-primary)' }}>
               Change Password
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
               {[
                 { key: 'current', label: 'Current Password' },
                 { key: 'newPass', label: 'New Password' },
@@ -498,9 +428,7 @@ export default function ProfilePage() {
               ].map((field) => (
                 <div key={field.key}>
                   <label style={labelStyle}>{field.label}</label>
-                  <input
-                    type="password"
-                    placeholder="••••••••"
+                  <input type="password" placeholder="••••••••"
                     value={(passwords as any)[field.key]}
                     onChange={(e) => setPasswords({ ...passwords, [field.key]: e.target.value })}
                     style={inputStyle()}
@@ -510,77 +438,38 @@ export default function ProfilePage() {
                 </div>
               ))}
             </div>
+
+            {passwordError && (
+              <p className="text-xs mt-3" style={{ color: 'var(--color-error)' }}>{passwordError}</p>
+            )}
+
             <div className="mt-4 flex justify-end">
-              <button
+              <button onClick={handleChangePassword} disabled={isChangingPassword}
                 className="px-4 py-2 rounded-lg text-sm font-semibold transition-all"
                 style={{
                   background: 'linear-gradient(to right, var(--color-primary), var(--color-primary-dark))',
-                  color: 'var(--color-text-primary)',
-                }}
-              >
-                Update Password
+                  color: '#fff',
+                  opacity: isChangingPassword ? 0.7 : 1,
+                }}>
+                {isChangingPassword ? 'Updating…' : 'Update Password'}
               </button>
             </div>
           </div>
 
-          {/* Active Sessions */}
+          {/* Account info snapshot */}
           <div style={sectionStyle}>
-            <h3 className="text-sm font-bold mb-4" style={{ color: 'var(--color-text-primary)' }}>
-              Active Sessions
-            </h3>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+            <h3 className="text-xs sm:text-sm font-bold mb-4" style={{ color: 'var(--color-text-primary)' }}>Account Info</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {[
-                { device: 'Chrome on macOS', location: 'San Francisco, CA', time: 'Active now', current: true },
-                { device: 'Safari on iPhone', location: 'San Francisco, CA', time: '2 hours ago', current: false },
-                { device: 'Firefox on Windows', location: 'New York, NY', time: '3 days ago', current: false },
-              ].map((session, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between p-3 rounded-lg"
-                  style={{
-                    backgroundColor: 'var(--color-bg-tertiary)',
-                    border: `1px solid ${session.current ? 'var(--color-primary)' : 'var(--color-border)'}`,
-                  }}
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                      style={{ backgroundColor: 'var(--color-bg-secondary)' }}
-                    >
-                      <svg className="w-4 h-4" style={{ color: 'var(--color-text-muted)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
-                          {session.device}
-                        </p>
-                        {session.current && (
-                          <span
-                            className="px-1.5 py-0.5 rounded text-[10px] font-semibold"
-                            style={{
-                              backgroundColor: 'rgba(138, 18, 18, 0.12)',
-                              color: 'var(--color-primary-light)',
-                            }}
-                          >
-                            Current
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
-                        {session.location} · {session.time}
-                      </p>
-                    </div>
-                  </div>
-                  {!session.current && (
-                    <button
-                      className="text-xs font-medium ml-2 shrink-0 transition-colors"
-                      style={{ color: 'var(--color-error)' }}
-                    >
-                      Revoke
-                    </button>
-                  )}
+                { label: 'Account Status', value: me?.isActive ? 'Active' : 'Inactive' },
+                { label: 'Email Verified', value: me?.isVerified ? 'Yes' : 'No' },
+                { label: 'Account Created', value: me?.createdAt ? new Date(me.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '—' },
+                { label: 'Last Login', value: me?.lastLoginAt ? new Date(me.lastLoginAt).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—' },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center justify-between py-2 px-3 rounded-lg"
+                  style={{ backgroundColor: 'var(--color-bg-tertiary)', border: '1px solid var(--color-border)' }}>
+                  <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{item.label}</span>
+                  <span className="text-xs font-semibold" style={{ color: 'var(--color-text-secondary)' }}>{item.value}</span>
                 </div>
               ))}
             </div>
@@ -591,66 +480,45 @@ export default function ProfilePage() {
       {/* ── NOTIFICATIONS TAB ── */}
       {activeTab === 'Notifications' && (
         <div style={sectionStyle} className="animate-fade-in">
-          <h3 className="text-sm font-bold mb-4" style={{ color: 'var(--color-text-primary)' }}>
+          <h3 className="text-xs sm:text-sm font-bold mb-4" style={{ color: 'var(--color-text-primary)' }}>
             Email Notifications
           </h3>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12">
+          <div className="space-y-1">
             {[
-              { key: 'reviewApproved', label: 'Tool approved', desc: 'When your submitted tool gets approved by admin' },
+              { key: 'reviewApproved', label: 'Tool approved', desc: 'When your submitted tool gets approved' },
               { key: 'reviewRejected', label: 'Tool rejected', desc: 'When your submitted tool is rejected with feedback' },
               { key: 'newComment', label: 'New comment', desc: 'When someone comments on your tool' },
               { key: 'newReview', label: 'New review', desc: 'When someone leaves a rating or review' },
               { key: 'newsletter', label: 'Newsletter', desc: 'Weekly roundup of top tools and platform news' },
-              { key: 'productUpdates', label: 'Product updates', desc: 'New features and improvements to the platform' },
+              { key: 'productUpdates', label: 'Product updates', desc: 'New features and improvements' },
             ].map((item, i, arr) => (
-              <div
-                key={item.key}
+              <div key={item.key}
                 className="flex items-center justify-between py-3"
-                style={{
-                  borderBottom: i < arr.length - 1 && !(i === arr.length - 2 && arr.length % 2 === 0)
-                    ? '1px solid var(--color-border)'
-                    : 'none',
-                }}
-              >
+                style={{ borderBottom: i < arr.length - 1 ? '1px solid var(--color-border)' : 'none' }}>
                 <div>
-                  <p className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
-                    {item.label}
-                  </p>
-                  <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
-                    {item.desc}
-                  </p>
+                  <p className="text-xs sm:text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>{item.label}</p>
+                  <p className="text-[10px] sm:text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>{item.desc}</p>
                 </div>
-                {/* Toggle */}
                 <button
-                  onClick={() =>
-                    setNotifications({ ...notifications, [item.key]: !(notifications as any)[item.key] })
-                  }
-                  className="shrink-0 ml-6"
+                  onClick={() => setNotifications({ ...notifications, [item.key]: !(notifications as any)[item.key] })}
+                  className="shrink-0 ml-4 sm:ml-6"
                   style={{
-                    width: '2.5rem',
-                    height: '1.375rem',
-                    backgroundColor: (notifications as any)[item.key]
-                      ? 'var(--color-primary)'
-                      : 'var(--color-bg-tertiary)',
+                    width: '2.25rem', height: '1.25rem',
+                    backgroundColor: (notifications as any)[item.key] ? 'var(--color-primary)' : 'var(--color-bg-tertiary)',
                     border: `1px solid ${(notifications as any)[item.key] ? 'var(--color-primary)' : 'var(--color-border-light)'}`,
                     borderRadius: '9999px',
                     transition: 'background-color 0.2s',
                     position: 'relative',
                     cursor: 'pointer',
-                  }}
-                >
-                  <span
-                    style={{
-                      position: 'absolute',
-                      top: '2px',
-                      left: (notifications as any)[item.key] ? 'calc(100% - 18px)' : '2px',
-                      width: '14px',
-                      height: '14px',
-                      borderRadius: '50%',
-                      backgroundColor: 'var(--color-text-primary)',
-                      transition: 'left 0.2s',
-                    }}
-                  />
+                  }}>
+                  <span style={{
+                    position: 'absolute', top: '2px',
+                    left: (notifications as any)[item.key] ? 'calc(100% - 16px)' : '2px',
+                    width: '12px', height: '12px',
+                    borderRadius: '50%',
+                    backgroundColor: 'var(--color-text-primary)',
+                    transition: 'left 0.2s',
+                  }} />
                 </button>
               </div>
             ))}
@@ -662,86 +530,59 @@ export default function ProfilePage() {
       {activeTab === 'Danger Zone' && (
         <div className="space-y-4 animate-fade-in">
 
-          {/* Export data */}
+          {/* Export */}
           <div style={sectionStyle}>
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start justify-between gap-4 flex-wrap">
               <div>
-                <h3 className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>
-                  Export Your Data
-                </h3>
-                <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
+                <h3 className="text-xs sm:text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>Export Your Data</h3>
+                <p className="text-[10px] sm:text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
                   Download a copy of all your tools, reviews, and account data in JSON format.
                 </p>
               </div>
               <button
                 className="px-4 py-2 rounded-lg text-sm font-medium shrink-0 transition-all"
-                style={{
-                  backgroundColor: 'var(--color-bg-tertiary)',
-                  color: 'var(--color-text-secondary)',
-                  border: '1px solid var(--color-border)',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.color = 'var(--color-text-primary)';
-                  e.currentTarget.style.borderColor = 'var(--color-border-light)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.color = 'var(--color-text-secondary)';
-                  e.currentTarget.style.borderColor = 'var(--color-border)';
-                }}
-              >
+                style={{ backgroundColor: 'var(--color-bg-tertiary)', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-text-primary)'; e.currentTarget.style.borderColor = 'var(--color-border-light)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-text-secondary)'; e.currentTarget.style.borderColor = 'var(--color-border)'; }}>
                 Export Data
               </button>
             </div>
           </div>
 
-          {/* Delete account */}
-          <div
-            className="p-5 rounded-lg"
-            style={{
-              backgroundColor: 'rgba(220, 38, 38, 0.04)',
-              border: '1px solid rgba(220, 38, 38, 0.25)',
-            }}
-          >
-            <h3 className="text-sm font-bold" style={{ color: 'var(--color-error)' }}>
-              Delete Account
-            </h3>
-            <p className="text-xs mt-1 mb-4" style={{ color: 'var(--color-text-muted)' }}>
-              Permanently delete your account and all associated data including tools, reviews, and profile
-              information. This action{' '}
-              <span style={{ color: 'var(--color-text-secondary)' }}>cannot be undone</span>.
+          {/* Delete */}
+          <div className="p-4 sm:p-5 rounded-lg"
+            style={{ backgroundColor: 'rgba(220,38,38,0.04)', border: '1px solid rgba(220,38,38,0.25)' }}>
+            <h3 className="text-xs sm:text-sm font-bold" style={{ color: 'var(--color-error)' }}>Deactivate Account</h3>
+            <p className="text-[10px] sm:text-xs mt-1 mb-4" style={{ color: 'var(--color-text-muted)' }}>
+              Deactivates your account and signs you out. Your data is preserved but your profile will be hidden.
+              Type <span style={{ fontFamily: 'monospace', color: 'var(--color-text-secondary)' }}>DELETE</span> to confirm.
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 items-end">
               <div>
                 <label style={{ ...labelStyle, color: 'var(--color-error)' }}>
                   Type <span style={{ fontFamily: 'monospace' }}>DELETE</span> to confirm
                 </label>
-                <input
-                  type="text"
-                  value={deleteConfirm}
+                <input type="text" value={deleteConfirm}
                   onChange={(e) => setDeleteConfirm(e.target.value)}
                   placeholder="DELETE"
-                  style={{
-                    ...inputStyle(),
-                    backgroundColor: 'var(--color-bg-card)',
-                    border: '1px solid rgba(220, 38, 38, 0.3)',
-                  }}
+                  style={{ ...inputStyle(), backgroundColor: 'var(--color-bg-card)', border: '1px solid rgba(220,38,38,0.3)' }}
                   onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--color-error)'; }}
-                  onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(220, 38, 38, 0.3)'; }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(220,38,38,0.3)'; }}
                 />
               </div>
               <div>
                 <button
-                  disabled={deleteConfirm !== 'DELETE'}
+                  disabled={deleteConfirm !== 'DELETE' || isDeactivating}
+                  onClick={() => deactivate()}
                   className="px-4 py-2 rounded-lg text-sm font-semibold transition-all w-full"
                   style={{
                     backgroundColor: deleteConfirm === 'DELETE' ? 'var(--color-error)' : 'var(--color-bg-tertiary)',
-                    color: deleteConfirm === 'DELETE' ? 'var(--color-text-primary)' : 'var(--color-text-muted)',
+                    color: deleteConfirm === 'DELETE' ? '#fff' : 'var(--color-text-muted)',
                     border: `1px solid ${deleteConfirm === 'DELETE' ? 'var(--color-error)' : 'var(--color-border)'}`,
                     cursor: deleteConfirm === 'DELETE' ? 'pointer' : 'not-allowed',
-                    opacity: deleteConfirm === 'DELETE' ? 1 : 0.5,
-                  }}
-                >
-                  Delete My Account
+                    opacity: deleteConfirm === 'DELETE' && !isDeactivating ? 1 : 0.5,
+                  }}>
+                  {isDeactivating ? 'Deactivating…' : 'Deactivate My Account'}
                 </button>
               </div>
             </div>

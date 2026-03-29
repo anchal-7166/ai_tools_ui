@@ -1,32 +1,26 @@
 @import "tailwindcss";
 
 :root {
-  /* Primary Colors */
-  --color-primary: #8a1212; /* Dark Red */
+  --color-primary: #8a1212;
   --color-primary-dark: #991b1b;
   --color-primary-light: #ef4444;
-  
-  /* Background Colors */
-  --color-bg-primary: #000000; /* Pure Black */
+
+  --color-bg-primary: #000000;
   --color-bg-secondary: #0a0a0a;
   --color-bg-tertiary: #1a1a1a;
   --color-bg-card: #121212;
-  
-  /* Text Colors */
+
   --color-text-primary: #ffffff;
   --color-text-secondary: #a3a3a3;
   --color-text-muted: #737373;
-  
-  /* Border Colors */
+
   --color-border: #262626;
   --color-border-light: #404040;
-  
-  /* Status Colors */
+
   --color-success: #22c55e;
   --color-error: #dc2626;
   --color-warning: #f59e0b;
-  
-  /* Gradients */
+
   --gradient-primary: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
   --gradient-overlay: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.95) 100%);
 }
@@ -44,29 +38,72 @@ body {
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* ── Hide scrollbars globally (keep scrollability) ─────────────────────── */
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+*::-webkit-scrollbar {
+  display: none;
+}
 
-/* Custom animation */
+/* ── Sidebar filter scroll: slim styled scrollbar ──────────────────────── */
+/*
+  Override the global hide rule specifically for the sidebar scroll container.
+  Shows a slim 4px track with a dark-red thumb that appears on hover/scroll.
+*/
+.sidebar-filter-scroll {
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: #3a1010 transparent;
+}
+
+.sidebar-filter-scroll::-webkit-scrollbar {
+  display: block;          /* re-enable (overrides the global hide above) */
+  width: 4px;
+}
+
+.sidebar-filter-scroll::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 99px;
+}
+
+.sidebar-filter-scroll::-webkit-scrollbar-thumb {
+  background: #2a0a0a;
+  border-radius: 99px;
+  transition: background 0.2s;
+}
+
+.sidebar-filter-scroll::-webkit-scrollbar-thumb:hover {
+  background: #8a1212;     /* red accent on hover */
+}
+
+/* Show thumb only when actively scrolling / hovering the sidebar */
+.sidebar-filter-scroll::-webkit-scrollbar-thumb {
+  background: transparent;
+}
+.sidebar-filter-scroll:hover::-webkit-scrollbar-thumb,
+.sidebar-filter-scroll:focus-within::-webkit-scrollbar-thumb {
+  background: #2a1010;
+}
+.sidebar-filter-scroll:hover::-webkit-scrollbar-thumb:hover {
+  background: #8a1212;
+}
+
+/* ── Animations ─────────────────────────────────────────────────────────── */
 @keyframes fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .animate-fade-in {
   animation: fade-in 0.3s ease-out;
 }
-
 
 @layer utilities {
   .text-balance {

@@ -189,22 +189,22 @@ const Sidebar = ({ isOpen, onClose, onFilterChange, activeFilters }: SidebarProp
           transform transition-all duration-300 ease-in-out
           ${isOpen ? 'translate-x-0' : '-translate-x-full'}
           lg:translate-x-0 lg:static lg:flex
-          ${isCollapsed ? 'lg:w-[60px]' : 'lg:w-64'}
+          ${isCollapsed ? 'lg:w-[79px]' : 'lg:w-64'}
           w-64
         `}
         style={{ height: '100dvh' }}
       >
 
         {/* ── Header ──────────────────────────────────────────────────── */}
-        <div className={`flex items-center border-b border-[#1f1f1f] flex-shrink-0 h-16 min-h-[64px] ${isCollapsed ? 'justify-center px-2' : 'justify-between px-4'}`}>
+        <div className={`flex items-center bg-[#171717] border-b border-[#1f1f1f] flex-shrink-0 h-16 min-h-[64px] ${isCollapsed ? 'justify-center px-10' : 'justify-between px-4'}`}>
           {!isCollapsed ? (
             <Link href="/" className="flex items-center gap-2.5 min-w-0 overflow-hidden">
-              <img src="/logo44.png" alt="AI Tool Store" className="w-8 h-8 object-contain flex-shrink-0" />
+              <img src="/aitool.png" alt="AI Tool Store" className="w-15 h-15 object-contain flex-shrink-0" />
               <span className="font-bold text-sm text-white whitespace-nowrap truncate">AI Tool Store</span>
             </Link>
           ) : (
             <Link href="/" className="flex items-center justify-center">
-              <img src="/logo44.png" alt="AI Tool Store" className="w-8 h-8 object-contain" />
+              <img src="/aitool.png" alt="AI Tool Store" className="w-14 h-14 object-contain flex-shrink-0" />
             </Link>
           )}
 

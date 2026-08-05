@@ -64,10 +64,10 @@ const Header = ({ onSidebarToggle, onSearch }: HeaderProps) => {
       />
 
       {/* Left ambient glow */}
-      <div className="absolute -left-20 top-1/2 -translate-y-1/2 w-64 h-64 bg-red-900/20 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -left-20 top-1/2 -translate-y-1/2 w-64 h-64 bg-red-600/20 rounded-full blur-3xl pointer-events-none" />
 
       {/* Right ambient glow */}
-      <div className="absolute -right-20 top-1/2 -translate-y-1/2 w-48 h-48 bg-red-950/30 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -right-20 top-1/2 -translate-y-1/2 w-48 h-48 bg-red-750/30 rounded-full blur-3xl pointer-events-none" />
 
       {/* Mouse spotlight */}
       <div

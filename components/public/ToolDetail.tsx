@@ -2,14 +2,15 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
+import { ArrowLeft } from 'lucide-react';
 import { useToolBySlug, useSimilarTools, useTrackClick, useToolById } from '@/lib/hooks/use-tools';
-import { 
-  useToolReviews, 
-  useReviewStats, 
-  useMyReviewForTool, 
-  useCreateReview, 
-  useMarkHelpful 
+import {
+  useToolReviews,
+  useReviewStats,
+  useMyReviewForTool,
+  useCreateReview,
+  useMarkHelpful
 } from '@/lib/hooks/use-reviews';
 import { useAuthStore } from '@/lib/store/auth-store';
 import Footer from '@/components/public/Footer';
@@ -17,8 +18,17 @@ import { toast } from 'sonner';
 
 const ToolDetailPage = () => {
   const params = useParams();
+  const router = useRouter();
   const id = params.id as string;
-  
+
+  const handleBack = () => {
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      router.back();
+    } else {
+      router.push('/');
+    }
+  };
+
   const { isAuthenticated } = useAuthStore();
   const { data: tool, isLoading: toolLoading } = useToolById(id);
   const { data: similarTools } = useSimilarTools(tool?.slug, 3);
@@ -47,7 +57,7 @@ const ToolDetailPage = () => {
       toast.error('Please login to submit a review');
       return;
     }
-  
+
     if (!userRating || !commentText.trim()) {
       toast.error('Please provide a rating and comment');
       return;
@@ -60,8 +70,8 @@ const ToolDetailPage = () => {
         title: reviewTitle.trim() || undefined,
         comment: commentText.trim(),
       });
-      
-      
+
+
 
       toast.success('Review submitted successfully!');
       setUserRating(0);
@@ -113,8 +123,8 @@ const ToolDetailPage = () => {
         <div className="text-center">
           <h1 className="text-2xl font-bold text-white mb-4">Tool Not Found</h1>
           <p className="text-neutral-400 mb-6">The tool you're looking for doesn't exist.</p>
-          <Link href="/" className="px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:scale-105 transition-transform">
-            Back to Home
+          <Link href="/" className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:scale-105 transition-transform">
+            <ArrowLeft className="w-4 h-4" />
           </Link>
         </div>
       </div>
@@ -129,13 +139,25 @@ const ToolDetailPage = () => {
       {/* Hero Section */}
       <div className="border-b border-[#262626]">
         <div className="max-w-7xl mx-auto px-4 py-4">
+          {/* Back Button */}
+          <div className="mb-4">
+            <button
+              onClick={handleBack}
+              className="inline-flex items-center justify-center p-2 rounded-full text-white hover:bg-neutral-900/50 transition-all duration-200 group cursor-pointer"
+              title="Go back"
+              aria-label="Go back"
+            >
+              <ArrowLeft className="w-6 h-6 text-red-900 group-hover:text-red-400 group-hover:-translate-x-1 transition-all duration-200" strokeWidth={2.5} />
+            </button>
+          </div>
+
           <div className="flex flex-col lg:flex-row gap-4">
             {/* Left: Icon & Stats */}
             <div className="flex flex-col items-center lg:items-start gap-3">
               <div className="w-16 h-16 rounded-lg flex items-center justify-center text-4xl bg-gradient-to-br from-[#8a1212] to-[#991b1b]">
                 {tool.logo || '🤖'}
               </div>
-              
+
               <div className="flex gap-4 text-xs">
                 <div className="text-center">
                   <div className="font-bold text-white">{tool.averageRating?.toFixed(1) || '0.0'}</div>
@@ -159,27 +181,26 @@ const ToolDetailPage = () => {
                   <h1 className="text-2xl font-bold mb-1 text-white">{tool.name}</h1>
                   <p className="text-sm text-[#b3b3b3] mb-2">{tool.tagline}</p>
                 </div>
-                
+
                 {tool.pricingPlans && tool.pricingPlans.length > 0 && (
                   <div className="relative px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ml-2"
                     style={{
-                      background: tool.pricingPlans[0].type === 'FREE' 
+                      background: tool.pricingPlans[0].type === 'FREE'
                         ? 'linear-gradient(to right, rgba(34, 197, 94, 0.2), rgba(22, 163, 74, 0.2))'
                         : tool.pricingPlans[0].type === 'FREEMIUM'
-                        ? 'linear-gradient(to right, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.2))'
-                        : 'linear-gradient(to right, rgba(168, 85, 247, 0.2), rgba(147, 51, 234, 0.2))',
-                      color: tool.pricingPlans[0].type === 'FREE' 
+                          ? 'linear-gradient(to right, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.2))'
+                          : 'linear-gradient(to right, rgba(168, 85, 247, 0.2), rgba(147, 51, 234, 0.2))',
+                      color: tool.pricingPlans[0].type === 'FREE'
                         ? '#4ade80'
                         : tool.pricingPlans[0].type === 'FREEMIUM'
-                        ? '#60a5fa'
-                        : '#a78bfa',
-                      border: `1px solid ${
-                        tool.pricingPlans[0].type === 'FREE' 
-                          ? 'rgba(34, 197, 94, 0.5)'
-                          : tool.pricingPlans[0].type === 'FREEMIUM'
+                          ? '#60a5fa'
+                          : '#a78bfa',
+                      border: `1px solid ${tool.pricingPlans[0].type === 'FREE'
+                        ? 'rgba(34, 197, 94, 0.5)'
+                        : tool.pricingPlans[0].type === 'FREEMIUM'
                           ? 'rgba(59, 130, 246, 0.5)'
                           : 'rgba(168, 85, 247, 0.5)'
-                      }`
+                        }`
                     }}
                   >
                     {tool.pricingPlans[0].type}
@@ -281,8 +302,8 @@ const ToolDetailPage = () => {
                           key={index}
                           className="aspect-square rounded overflow-hidden cursor-pointer hover:scale-105 transition-transform bg-[#1a1a1a] border border-[#262626]"
                         >
-                          <img 
-                            src={screenshot.imageUrl} 
+                          <img
+                            src={screenshot.imageUrl}
                             alt={`Screenshot ${index + 1}`}
                             className="w-full h-full object-cover"
                           />
@@ -680,7 +701,7 @@ const ToolDetailPage = () => {
           </div>
         </div>
       </div>
-      
+
       <Footer />
     </div>
   );

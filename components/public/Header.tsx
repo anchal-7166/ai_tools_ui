@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '@/lib/store/auth-store';
+import { LayoutDashboard } from 'lucide-react';
 
 interface HeaderProps {
   onSidebarToggle: () => void;
@@ -132,7 +133,7 @@ const Header = ({ onSidebarToggle, onSearch }: HeaderProps) => {
           {/* Center: heading */}
           <div className="hidden md:block text-center flex-1 px-4 lg:px-8">
             <h1 className="text-base lg:text-xl xl:text-2xl font-bold">
-             <span className="text-white">Discover the Best </span>
+              <span className="text-white">Discover the Best </span>
               <span className="bg-gradient-to-r from-red-500 via-red-600 to-red-700 bg-clip-text text-transparent">
                 AI Tools
               </span>
@@ -155,9 +156,7 @@ const Header = ({ onSidebarToggle, onSearch }: HeaderProps) => {
                   style={{ animation: 'shimmer 0.8s ease-in-out', animationFillMode: 'forwards' }}
                 />
               </span>
-              <svg className="w-4 h-4 sm:w-5 sm:h-5 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-              </svg>
+              <LayoutDashboard className="w-4 h-4 sm:w-5 sm:h-5 relative z-10 text-red-500 group-hover:text-white transition-colors" />
               {/* <span className="relative z-10 hidden sm:inline">Dashboard</span> */}
             </Link>
           ) : (
@@ -200,8 +199,8 @@ const Header = ({ onSidebarToggle, onSearch }: HeaderProps) => {
                 onBlur={() => setIsFocused(false)}
                 placeholder={
                   searchMode === 'text' ? 'Search AI tools...' :
-                  searchMode === 'chat' ? 'Ask AI anything...' :
-                  'Listening...'
+                    searchMode === 'chat' ? 'Ask AI anything...' :
+                      'Listening...'
                 }
                 className="relative w-full pl-3 sm:pl-4 pr-3 sm:pr-4 py-2 sm:py-2.5 lg:py-3 bg-neutral-900/80 backdrop-blur-sm border border-neutral-700/80 rounded-lg sm:rounded-xl text-white placeholder-neutral-500 focus:outline-none focus:border-red-700/70 transition-all duration-200 text-xs sm:text-sm"
                 disabled={searchMode === 'voice' && isListening}
@@ -342,7 +341,7 @@ const Header = ({ onSidebarToggle, onSearch }: HeaderProps) => {
       </div>
     </header>
 
-    
+
   );
 };
 

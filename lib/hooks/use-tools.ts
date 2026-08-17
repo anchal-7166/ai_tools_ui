@@ -61,19 +61,31 @@ export function useFilterOptions() {
 
 // src/lib/hooks/use-tools.ts - Add these hooks
 export function useToolBySlug(slug: string) {
+  const queryClient = useQueryClient();
   return useQuery({
     queryKey: ['tool', slug],
-    queryFn: () => toolsApi.getBySlug(slug),
-    staleTime: 300000, // 5 minutes
+    queryFn: async () => {
+      const data = await toolsApi.getBySlug(slug);
+      queryClient.invalidateQueries({ queryKey: ['tools'] });
+      return data;
+    },
+    staleTime: 0,
+    refetchOnMount: 'always',
     enabled: !!slug,
   });
 }
 
 export function useToolById(id: string) {
+  const queryClient = useQueryClient();
   return useQuery({
     queryKey: ['tool', id],
-    queryFn: () => toolsApi.getById(id),
-    staleTime: 300000, // 5 minutes
+    queryFn: async () => {
+      const data = await toolsApi.getById(id);
+      queryClient.invalidateQueries({ queryKey: ['tools'] });
+      return data;
+    },
+    staleTime: 0,
+    refetchOnMount: 'always',
     enabled: !!id,
   });
 }

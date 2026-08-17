@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
-import { useToolBySlug, useSimilarTools, useTrackClick, useToolById } from '@/lib/hooks/use-tools';
+import { useToolBySlug, useSimilarTools, useTrackClick, useToolById, useToggleFavorite, useCheckFavorite } from '@/lib/hooks/use-tools';
 import {
   useToolReviews,
   useReviewStats,
@@ -38,6 +38,15 @@ const ToolDetailPage = () => {
   const trackClick = useTrackClick();
   const createReview = useCreateReview();
   const markHelpful = useMarkHelpful();
+
+  const { mutate: toggleFavorite, isPending: isFavoritePending } = useToggleFavorite();
+  const { data: favoriteStatus } = useCheckFavorite(tool?.id);
+  const isFavorited = favoriteStatus?.isFavorited ?? tool?._favorited ?? false;
+
+  const handleToggleFavorite = () => {
+    if (!tool) return;
+    toggleFavorite({ toolId: tool.id, toolSlug: tool.slug });
+  };
 
   const [activeTab, setActiveTab] = useState('overview');
   const [userRating, setUserRating] = useState(0);
@@ -239,13 +248,41 @@ const ToolDetailPage = () => {
                   </svg>
                   Visit Website
                 </button>
-                <button className="px-4 py-1.5 rounded bg-[#1a1a1a] text-white text-sm font-semibold flex items-center gap-1.5 border border-[#262626] hover:bg-[#262626] transition-all">
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                <button
+                  onClick={handleToggleFavorite}
+                  disabled={isFavoritePending}
+                  className={`px-4 py-1.5 rounded text-sm font-semibold flex items-center gap-1.5 border transition-all cursor-pointer disabled:opacity-50 ${
+                    isFavorited
+                      ? 'bg-red-950/40 border-red-800/60 text-red-400 hover:bg-red-900/50'
+                      : 'bg-[#1a1a1a] text-white border-[#262626] hover:bg-[#262626]'
+                  }`}
+                  title={isFavorited ? 'Remove from saved' : 'Save to favorites'}
+                >
+                  <svg
+                    className={`w-3.5 h-3.5 transition-colors ${
+                      isFavorited ? 'text-red-500 fill-red-500' : 'text-white fill-none'
+                    }`}
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                    />
                   </svg>
-                  Save
+                  <span>{isFavorited ? 'Saved' : 'Save'}</span>
                 </button>
-                <button className="px-4 py-1.5 rounded bg-[#1a1a1a] text-white text-sm font-semibold flex items-center gap-1.5 border border-[#262626] hover:bg-[#262626] transition-all">
+                <button
+                  onClick={() => {
+                    if (typeof window !== 'undefined') {
+                      navigator.clipboard.writeText(window.location.href);
+                      toast.success('Link copied to clipboard!');
+                    }
+                  }}
+                  className="px-4 py-1.5 rounded bg-[#1a1a1a] text-white text-sm font-semibold flex items-center gap-1.5 border border-[#262626] hover:bg-[#262626] transition-all cursor-pointer"
+                >
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
                   </svg>

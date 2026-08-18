@@ -150,46 +150,80 @@ export function useToggleFavorite() {
     onMutate: async ({ toolId, toolSlug }) => {
       if (!isAuthenticated) return;
 
-      // Cancel any outgoing refetches so they don't overwrite our optimistic update
+      // Cancel outgoing refetches so they don't overwrite optimistic update
       await queryClient.cancelQueries({ queryKey: ['tools'] });
+      await queryClient.cancelQueries({ queryKey: ['tool'] });
 
-      // Snapshot the previous value for rollback
-      const previousData = queryClient.getQueriesData({ queryKey: ['tools'] });
+      // Determine current favorited status from favorite check cache or tool cache
+      const favCheckData: any = queryClient.getQueryData(['tools', 'favorite', toolId]);
+      
+      let currentlyFavorited = false;
+      if (favCheckData && typeof favCheckData.isFavorited === 'boolean') {
+        currentlyFavorited = favCheckData.isFavorited;
+      } else {
+        const toolData: any = queryClient.getQueryData(['tool', toolId]) || queryClient.getQueryData(['tool', toolSlug]);
+        if (toolData && typeof toolData._favorited === 'boolean') {
+          currentlyFavorited = toolData._favorited;
+        }
+      }
 
-      // Optimistically update every cached tools list that contains this tool
+      const nextFavorited = !currentlyFavorited;
+
+      // Snapshot previous values for rollback
+      const previousFavData = queryClient.getQueryData(['tools', 'favorite', toolId]);
+      const previousToolsData = queryClient.getQueriesData({ queryKey: ['tools'] });
+      const previousToolData = queryClient.getQueriesData({ queryKey: ['tool'] });
+
+      // 1. Optimistically update ['tools', 'favorite', toolId]
+      queryClient.setQueryData(['tools', 'favorite', toolId], { isFavorited: nextFavorited });
+
+      // 2. Helper to update a tool object
+      const updateToolObj = (t: any) => {
+        if (!t || (t.id !== toolId && t.slug !== toolSlug)) return t;
+        const currentCount = t.favoriteCount ?? 0;
+        const newCount = nextFavorited
+          ? currentCount + 1
+          : Math.max(0, currentCount - 1);
+        return {
+          ...t,
+          _favorited: nextFavorited,
+          favoriteCount: newCount,
+        };
+      };
+
+      // 3. Optimistically update ['tools'] list queries
       queryClient.setQueriesData({ queryKey: ['tools'] }, (old: any) => {
         if (!old) return old;
-
-        const updateTool = (tool: any) => {
-          if (tool.id !== toolId) return tool;
-          const wasFavorited = tool._favorited ?? false;
-          return {
-            ...tool,
-            _favorited: !wasFavorited,
-            favoriteCount: wasFavorited
-              ? Math.max(0, (tool.favoriteCount ?? 0) - 1)
-              : (tool.favoriteCount ?? 0) + 1,
-          };
-        };
-
-        // Handle paginated shape { data: Tool[], meta: ... }
         if (Array.isArray(old?.data)) {
-          return { ...old, data: old.data.map(updateTool) };
+          return { ...old, data: old.data.map(updateToolObj) };
         }
-        // Handle flat array
         if (Array.isArray(old)) {
-          return old.map(updateTool);
+          return old.map(updateToolObj);
         }
         return old;
       });
 
-      return { previousData };
+      // 4. Optimistically update single ['tool'] detail queries
+      queryClient.setQueriesData({ queryKey: ['tool'] }, (old: any) => {
+        if (!old) return old;
+        return updateToolObj(old);
+      });
+
+      return { previousFavData, previousToolsData, previousToolData };
     },
 
-    onError: (error: any, _, context) => {
+    onError: (error: any, { toolId }, context) => {
       // Roll back on failure
-      if (context?.previousData) {
-        context.previousData.forEach(([queryKey, data]: [any, any]) => {
+      if (context?.previousFavData !== undefined) {
+        queryClient.setQueryData(['tools', 'favorite', toolId], context.previousFavData);
+      }
+      if (context?.previousToolsData) {
+        context.previousToolsData.forEach(([queryKey, data]: [any, any]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+      if (context?.previousToolData) {
+        context.previousToolData.forEach(([queryKey, data]: [any, any]) => {
           queryClient.setQueryData(queryKey, data);
         });
       }
@@ -201,9 +235,14 @@ export function useToggleFavorite() {
       }
     },
 
+    onSuccess: (data: any, { toolId }) => {
+      if (data && typeof data.liked === 'boolean') {
+        queryClient.setQueryData(['tools', 'favorite', toolId], { isFavorited: data.liked });
+      }
+    },
+
     onSettled: () => {
-      // Always refetch after mutation to sync with server truth
-      queryClient.invalidateQueries({ queryKey: ['tools'] });
+      queryClient.invalidateQueries({ queryKey: ['tools', 'my', 'saved'] });
     },
   });
 }

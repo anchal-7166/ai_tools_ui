@@ -1,4 +1,5 @@
 'use client';
+import React from 'react';
 import Link from 'next/link';
 
 const benefits = [
@@ -33,8 +34,8 @@ export default function MyToolsPage() {
       {/* How it works — inline steps */}
       <div className="flex items-center gap-1 sm:gap-2 mb-8 flex-wrap justify-center">
         {steps.map((s, i) => (
-          <>
-            <div key={s.num} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg"
+          <React.Fragment key={s.num}>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg"
               style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border)' }}
             >
               <span className="text-[10px] font-black" style={{ color: 'var(--color-primary-light)' }}>{s.num}</span>
@@ -42,11 +43,11 @@ export default function MyToolsPage() {
               <span className="text-[9px] px-1.5 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(138,18,18,0.1)', color: 'var(--color-primary-light)' }}>{s.desc}</span>
             </div>
             {i < steps.length - 1 && (
-              <svg key={`arrow-${i}`} className="w-3 h-3 shrink-0" style={{ color: 'var(--color-border-light)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3 h-3 shrink-0" style={{ color: 'var(--color-border-light)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             )}
-          </>
+          </React.Fragment>
         ))}
       </div>
 

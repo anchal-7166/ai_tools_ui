@@ -63,8 +63,12 @@ function SearchContent() {
                   className="bg-[#0a0a0a] border border-[#262626] rounded-lg p-4 hover:border-red-600 transition-all group"
                 >
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] rounded-md flex items-center justify-center border border-[#262626] group-hover:border-red-600 transition-colors">
-                      <span className="text-xl">{tool.logo || '🤖'}</span>
+                    <div className="w-10 h-10 bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] rounded-md flex items-center justify-center border border-[#262626] group-hover:border-red-600 transition-colors overflow-hidden shrink-0">
+                      {tool.logo && (tool.logo.startsWith('http://') || tool.logo.startsWith('https://') || tool.logo.startsWith('/')) ? (
+                        <img src={tool.logo} alt={tool.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-xl">{tool.logo || '🤖'}</span>
+                      )}
                     </div>
                     <h3 className="text-white font-semibold group-hover:text-red-500 transition-colors line-clamp-1">
                       {tool.name}

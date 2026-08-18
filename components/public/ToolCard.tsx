@@ -22,8 +22,12 @@ export const ToolCard = ({ tool }: any) => {
 
         {/* Header - Icon + Tool Name */}
         <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5">
-          <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] rounded-md flex items-center justify-center flex-shrink-0 border border-[#262626] group-hover:scale-110 transition-all">
-            <span className="text-base sm:text-lg">{"🤖"}</span>
+          <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] rounded-md flex items-center justify-center flex-shrink-0 border border-[#262626] group-hover:scale-110 transition-all overflow-hidden">
+            {tool.logo && (tool.logo.startsWith('http://') || tool.logo.startsWith('https://') || tool.logo.startsWith('/')) ? (
+              <img src={tool.logo} alt={tool.name} className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-base sm:text-lg">{tool.logo || "🤖"}</span>
+            )}
           </div>
 
           <h3 className="text-xs sm:text-sm font-semibold text-white  transition-colors line-clamp-1 flex-1">
@@ -120,10 +124,10 @@ export const ToolCard = ({ tool }: any) => {
         <div className="flex-grow"></div>
 
         {/* Actions */}
-        <div className="flex items-center gap-1 sm:gap-1.5 pt-1.5 sm:pt-2 border-t border-[#262626]">
+        <div className="flex items-center gap-1.5 pt-1.5 sm:pt-2 border-t border-[#262626]">
           <Link
             href={`/tools/${tool.id}`}
-            className="flex-1 px-2 sm:px-2.5 py-1 sm:py-1.5 bg-gradient-to-r from-[#8a1212] to-[#991b1b] hover:from-[#991b1b] hover:to-[#8a1212] text-white text-[10px] sm:text-xs font-semibold rounded text-center transition-all duration-200 transform hover:scale-[1.02] active:scale-95"
+            className="flex-1 py-1 sm:py-1.5 bg-gradient-to-r from-[#8a1212] to-[#991b1b] hover:from-[#991b1b] hover:to-[#8a1212] text-neutral-200 hover:text-white text-[10px] sm:text-xs font-medium rounded text-center transition-all duration-200 transform hover:scale-[1.02] active:scale-95"
           >
             View
           </Link>
@@ -132,10 +136,11 @@ export const ToolCard = ({ tool }: any) => {
           {tool.pricingPlans && tool.pricingPlans.length > 0 && (
             <span
               className={`
-                px-1 sm:px-1.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-wide whitespace-nowrap
+                min-w-[78px] sm:min-w-[90px] text-center px-1.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-wide whitespace-nowrap flex-shrink-0
                 ${tool.pricingPlans[0].type === "FREE" ? "bg-gradient-to-r from-green-900/40 to-green-800/40 text-green-400 border border-green-700/50" : ""}
                 ${tool.pricingPlans[0].type === "FREEMIUM" ? "bg-gradient-to-r from-blue-900/40 to-blue-800/40 text-blue-400 border border-blue-700/50" : ""}
                 ${tool.pricingPlans[0].type === "SUBSCRIPTION" ? "bg-gradient-to-r from-purple-900/40 to-purple-800/40 text-purple-400 border border-purple-700/50" : ""}
+                ${!["FREE", "FREEMIUM", "SUBSCRIPTION"].includes(tool.pricingPlans[0].type) ? "bg-gradient-to-r from-purple-900/40 to-purple-800/40 text-purple-400 border border-purple-700/50" : ""}
               `}
             >
               {tool.pricingPlans[0].type}

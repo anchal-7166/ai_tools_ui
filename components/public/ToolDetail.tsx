@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Star, Eye, Heart, ChevronLeft, ChevronRight, Maximize2, X } from 'lucide-react';
 import { useToolBySlug, useSimilarTools, useTrackClick, useToolById, useToggleFavorite, useCheckFavorite } from '@/lib/hooks/use-tools';
 import {
   useToolReviews,
@@ -52,6 +52,8 @@ const ToolDetailPage = () => {
   const [userRating, setUserRating] = useState(0);
   const [reviewTitle, setReviewTitle] = useState('');
   const [commentText, setCommentText] = useState('');
+  const [currentScreenshotIndex, setCurrentScreenshotIndex] = useState(0);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
   const handleVisitWebsite = () => {
     if (tool?.websiteUrl) {
@@ -146,159 +148,160 @@ const ToolDetailPage = () => {
   return (
     <div className="min-h-screen bg-black">
       {/* Hero Section */}
-      <div className="border-b border-[#262626]">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          {/* Back Button */}
-          <div className="mb-4">
+      <div className="relative overflow-hidden pt-3 pb-7 sm:pt-4 sm:pb-9">
+        {/* Base dark gradient */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0f0f0f] via-[#0a0a0a] to-[#080808]" />
+
+
+
+        {/* Left ambient glow */}
+        <div className="absolute -left-20 top-1/2 -translate-y-1/2 w-64 h-64 bg-red-600/20 rounded-full blur-3xl pointer-events-none" />
+
+        {/* Right ambient glow */}
+        <div className="absolute -right-20 top-1/2 -translate-y-1/2 w-64 h-64 bg-red-750/30 rounded-full blur-3xl pointer-events-none" />
+
+        {/* Bottom border glow */}
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-red-800/50 to-transparent" />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
+          {/* Top Bar: Back Button */}
+          <div className="mb-2.5 sm:mb-3 flex items-center justify-between">
             <button
               onClick={handleBack}
-              className="inline-flex items-center justify-center p-2 rounded-full text-white hover:bg-neutral-900/50 transition-all duration-200 group cursor-pointer"
+              className="inline-flex items-center justify-center p-1.5 text-neutral-300 hover:text-white transition-all duration-200 group cursor-pointer"
               title="Go back"
               aria-label="Go back"
             >
-              <ArrowLeft className="w-6 h-6 text-red-900 group-hover:text-red-400 group-hover:-translate-x-1 transition-all duration-200" strokeWidth={2.5} />
+              <ArrowLeft className="w-5 h-5 text-red-500 group-hover:text-red-400 group-hover:-translate-x-1 transition-all duration-200" strokeWidth={2.5} />
             </button>
           </div>
 
-          <div className="flex flex-col lg:flex-row gap-4">
-            {/* Left: Icon & Stats */}
-            <div className="flex flex-col items-center lg:items-start gap-3">
-              <div className="w-16 h-16 rounded-lg flex items-center justify-center text-4xl bg-gradient-to-br from-[#8a1212] to-[#991b1b]">
-                {tool.logo || '🤖'}
+          {/* Hero Card Wrapper */}
+          <div className="bg-neutral-900/60 backdrop-blur-md rounded-xl p-4 sm:p-5">
+            <div className="flex flex-col md:flex-row items-start gap-4 sm:gap-5">
+
+              {/* Left: Logo */}
+              <div className="shrink-0">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl flex items-center justify-center text-2xl sm:text-3xl bg-gradient-to-br from-[#2a0b0b] via-[#1c0808] to-[#0a0a0a] border border-red-800/40 shadow-md shadow-red-950/40 transform hover:scale-105 transition-transform duration-300 overflow-hidden">
+                  {tool.logo && (tool.logo.startsWith('http://') || tool.logo.startsWith('https://') || tool.logo.startsWith('/')) ? (
+                    <img src={tool.logo} alt={tool.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <span>{tool.logo || '🤖'}</span>
+                  )}
+                </div>
               </div>
 
-              <div className="flex gap-4 text-xs">
-                <div className="text-center">
-                  <div className="font-bold text-white">{tool.averageRating?.toFixed(1) || '0.0'}</div>
-                  <div className="text-[#8c8c8c]">Rating</div>
-                </div>
-                <div className="text-center">
-                  <div className="font-bold text-white">{tool.viewCount || 0}</div>
-                  <div className="text-[#8c8c8c]">Views</div>
-                </div>
-                <div className="text-center">
-                  <div className="font-bold text-white">{tool.totalClicks || 0}</div>
-                  <div className="text-[#8c8c8c]">Clicks</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Right: Details */}
-            <div className="flex-1">
-              <div className="flex items-start justify-between mb-2">
-                <div className="flex-1">
-                  <h1 className="text-2xl font-bold mb-1 text-white">{tool.name}</h1>
-                  <p className="text-sm text-[#b3b3b3] mb-2">{tool.tagline}</p>
-                </div>
-
-                {tool.pricingPlans && tool.pricingPlans.length > 0 && (
-                  <div className="relative px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ml-2"
-                    style={{
-                      background: tool.pricingPlans[0].type === 'FREE'
-                        ? 'linear-gradient(to right, rgba(34, 197, 94, 0.2), rgba(22, 163, 74, 0.2))'
-                        : tool.pricingPlans[0].type === 'FREEMIUM'
-                          ? 'linear-gradient(to right, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.2))'
-                          : 'linear-gradient(to right, rgba(168, 85, 247, 0.2), rgba(147, 51, 234, 0.2))',
-                      color: tool.pricingPlans[0].type === 'FREE'
-                        ? '#4ade80'
-                        : tool.pricingPlans[0].type === 'FREEMIUM'
-                          ? '#60a5fa'
-                          : '#a78bfa',
-                      border: `1px solid ${tool.pricingPlans[0].type === 'FREE'
-                        ? 'rgba(34, 197, 94, 0.5)'
-                        : tool.pricingPlans[0].type === 'FREEMIUM'
-                          ? 'rgba(59, 130, 246, 0.5)'
-                          : 'rgba(168, 85, 247, 0.5)'
-                        }`
-                    }}
-                  >
-                    {tool.pricingPlans[0].type}
+              {/* Right: Info, Pricing, Tags & Aligned Action/Stat Row */}
+              <div className="flex-1 w-full">
+                <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
+                  <div className="flex-1 min-w-[200px]">
+                    <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight mb-1">
+                      {tool.name}
+                    </h1>
+                    <p className="text-xs sm:text-sm text-neutral-300 leading-relaxed max-w-3xl">
+                      {tool.tagline}
+                    </p>
                   </div>
-                )}
-              </div>
 
-              {/* Tags */}
-              <div className="flex flex-wrap gap-1.5 mb-3">
-                {tool.categories?.slice(0, 3).map((cat: any) => (
-                  <span
-                    key={cat.id}
-                    className="px-2 py-0.5 rounded text-xs bg-[#1a1a1a] text-[#b3b3b3] border border-[#262626]"
-                  >
-                    {cat.category.name}
-                  </span>
-                ))}
-                {tool.tags?.slice(0, 3).map((tag: any) => (
-                  <span
-                    key={tag.id}
-                    className="px-2 py-0.5 rounded text-xs bg-[#1a1a1a] text-[#b3b3b3] border border-[#262626]"
-                  >
-                    {tag.tag.name}
-                  </span>
-                ))}
-              </div>
+                  {tool.pricingPlans && tool.pricingPlans.length > 0 && (
+                    <div
+                      className={`
+                        px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shrink-0 border shadow-sm
+                        ${tool.pricingPlans[0].type === "FREE" ? "bg-green-500/10 text-green-400 border-green-500/30" : ""}
+                        ${tool.pricingPlans[0].type === "FREEMIUM" ? "bg-blue-500/10 text-blue-400 border-blue-500/30" : ""}
+                        ${tool.pricingPlans[0].type === "SUBSCRIPTION" ? "bg-purple-500/10 text-purple-400 border-purple-500/30" : ""}
+                        ${!["FREE", "FREEMIUM", "SUBSCRIPTION"].includes(tool.pricingPlans[0].type) ? "bg-purple-500/10 text-purple-400 border-purple-500/30" : ""}
+                      `}
+                    >
+                      {tool.pricingPlans[0].type}
+                    </div>
+                  )}
+                </div>
 
-              {/* Action Buttons */}
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={handleVisitWebsite}
-                  className="px-4 py-1.5 rounded bg-gradient-to-r from-[#8a1212] to-[#991b1b] text-white text-sm font-semibold flex items-center gap-1.5 transition-all hover:scale-105"
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                  Visit Website
-                </button>
-                <button
-                  onClick={handleToggleFavorite}
-                  disabled={isFavoritePending}
-                  className={`px-4 py-1.5 rounded text-sm font-semibold flex items-center gap-1.5 border transition-all cursor-pointer disabled:opacity-50 ${
-                    isFavorited
+                {/* Categories & Tags Pills */}
+                <div className="flex flex-wrap gap-2 my-3">
+                  {tool.categories?.slice(0, 4).map((cat: any) => (
+                    <span
+                      key={cat.id}
+                      className="px-2.5 py-1 rounded-md text-xs font-medium bg-neutral-800/60 text-neutral-300 border border-neutral-700/50 hover:bg-neutral-800 transition-colors"
+                    >
+                      {cat.category.name}
+                    </span>
+                  ))}
+                  {tool.tags?.slice(0, 4).map((tag: any) => (
+                    <span
+                      key={tag.id}
+                      className="px-2.5 py-1 rounded-md text-xs font-medium bg-neutral-800/40 text-neutral-400 border border-neutral-700/40 hover:bg-neutral-800 transition-colors"
+                    >
+                      #{tag.tag.name}
+                    </span>
+                  ))}
+                </div>
+
+                {/* Single Row: Rating, Likes, Visit & Save */}
+                <div className="flex flex-wrap items-center gap-2.5 pt-1">
+                  {/* Rating */}
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-neutral-200" title="Rating">
+                    <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+                    <span>{tool.averageRating?.toFixed(1) || '0.0'}</span>
+                  </div>
+
+                  {/* Likes */}
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-neutral-200" title="Likes">
+                    <Heart className="w-4 h-4 text-red-500 fill-red-500" />
+                    <span>{tool.favoriteCount || 0}</span>
+                  </div>
+
+                  {/* Visit Button */}
+                  <button
+                    onClick={handleVisitWebsite}
+                    className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-red-600 via-red-700 to-red-800 hover:from-red-500 hover:to-red-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-md shadow-red-950/50 transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer"
+                  >
+                    <span>Visit</span>
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  </button>
+
+                  {/* Save Button */}
+                  <button
+                    onClick={handleToggleFavorite}
+                    disabled={isFavoritePending}
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 border transition-all duration-200 cursor-pointer active:scale-95 disabled:opacity-50 ${isFavorited
                       ? 'bg-red-950/40 border-red-800/60 text-red-400 hover:bg-red-900/50'
-                      : 'bg-[#1a1a1a] text-white border-[#262626] hover:bg-[#262626]'
-                  }`}
-                  title={isFavorited ? 'Remove from saved' : 'Save to favorites'}
-                >
-                  <svg
-                    className={`w-3.5 h-3.5 transition-colors ${
-                      isFavorited ? 'text-red-500 fill-red-500' : 'text-white fill-none'
-                    }`}
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                      : 'bg-neutral-800/80 text-white border-neutral-700/70 hover:bg-neutral-800 hover:border-neutral-600'
+                      }`}
+                    title={isFavorited ? 'Remove from saved' : 'Save to favorites'}
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                    />
-                  </svg>
-                  <span>{isFavorited ? 'Saved' : 'Save'}</span>
-                </button>
-                <button
-                  onClick={() => {
-                    if (typeof window !== 'undefined') {
-                      navigator.clipboard.writeText(window.location.href);
-                      toast.success('Link copied to clipboard!');
-                    }
-                  }}
-                  className="px-4 py-1.5 rounded bg-[#1a1a1a] text-white text-sm font-semibold flex items-center gap-1.5 border border-[#262626] hover:bg-[#262626] transition-all cursor-pointer"
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                  </svg>
-                  Share
-                </button>
+                    <svg
+                      className={`w-3.5 h-3.5 transition-colors ${isFavorited ? 'text-red-500 fill-red-500' : 'text-neutral-300 fill-none'
+                        }`}
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                      />
+                    </svg>
+                    <span>{isFavorited ? 'Saved' : 'Save'}</span>
+                  </button>
+                </div>
+
               </div>
+
             </div>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-4">
+      <div className="max-w-7xl mx-auto px-4 pt-6 sm:pt-8 pb-6">
         {/* Tabs */}
-        <div className="flex gap-2 mb-4 overflow-x-auto pb-1 border-b border-[#262626]">
-          {['overview', 'features', 'pricing', 'reviews'].map((tab) => (
+        <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
+          {['overview', 'features', 'pricing'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -310,9 +313,6 @@ const ToolDetailPage = () => {
               }}
             >
               {tab}
-              {tab === 'reviews' && reviewsMeta && (
-                <span className="ml-1 text-xs">({reviewsMeta.total})</span>
-              )}
             </button>
           ))}
         </div>
@@ -330,23 +330,149 @@ const ToolDetailPage = () => {
                   </p>
                 </div>
 
-                {tool.screenshots && tool.screenshots.length > 0 && (
-                  <div className="p-4 rounded-lg bg-[#0a0a0a] border border-[#262626]">
-                    <h2 className="text-lg font-bold mb-3 text-white">Screenshots</h2>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                      {tool.screenshots.map((screenshot: any, index: number) => (
-                        <div
-                          key={index}
-                          className="aspect-square rounded overflow-hidden cursor-pointer hover:scale-105 transition-transform bg-[#1a1a1a] border border-[#262626]"
-                        >
-                          <img
-                            src={screenshot.imageUrl}
-                            alt={`Screenshot ${index + 1}`}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      ))}
+                {/* Video Demo Section */}
+                {Boolean(tool?.videoUrl && typeof tool.videoUrl === 'string' && tool.videoUrl.trim().length > 0 && (tool.videoUrl.trim().startsWith('http://') || tool.videoUrl.trim().startsWith('https://'))) && (
+                  <div className="p-4 sm:p-5 rounded-xl bg-[#0a0a0a] border border-[#262626]">
+                    <div className="flex items-center justify-between mb-3">
+                      <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                        <span>Video Walkthrough</span>
+                        <span className="px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-red-600/20 text-red-400 border border-red-800/40">
+                          Demo Video
+                        </span>
+                      </h2>
                     </div>
+
+                    <div className="relative rounded-xl overflow-hidden bg-[#141414] aspect-video w-full border border-neutral-800/80 shadow-xl">
+                      {tool.videoUrl.includes('youtube.com') || tool.videoUrl.includes('youtu.be') ? (
+                        <iframe
+                          src={
+                            tool.videoUrl.includes('watch?v=')
+                              ? tool.videoUrl.replace('watch?v=', 'embed/')
+                              : tool.videoUrl.includes('youtu.be/')
+                              ? `https://www.youtube.com/embed/${tool.videoUrl.split('youtu.be/')[1]}`
+                              : tool.videoUrl
+                          }
+                          title={`${tool.name} Demo Video`}
+                          className="w-full h-full border-0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        />
+                      ) : (
+                        <video
+                          src={tool.videoUrl}
+                          controls
+                          autoPlay
+                          loop
+                          muted
+                          className="w-full h-full object-cover"
+                        />
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Screenshots Carousel */}
+                {tool.screenshots && tool.screenshots.length > 0 && (
+                  <div className="p-4 sm:p-5 rounded-xl bg-[#0a0a0a] border border-[#262626]">
+                    <div className="flex items-center justify-between mb-3">
+                      <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                        <span>Screenshots & Demo</span>
+                        <span className="text-xs text-neutral-400 font-normal">
+                          ({currentScreenshotIndex + 1}/{tool.screenshots.length})
+                        </span>
+                      </h2>
+                    </div>
+
+                    {/* Main Featured Carousel Display */}
+                    <div className="relative group rounded-xl overflow-hidden bg-[#141414] aspect-[16/9] sm:h-[360px] w-full border border-neutral-800/80 shadow-lg">
+                      <img
+                        src={tool.screenshots[currentScreenshotIndex]?.url || tool.screenshots[currentScreenshotIndex]?.imageUrl}
+                        alt={`Screenshot ${currentScreenshotIndex + 1}`}
+                        className="w-full h-full object-cover transition-all duration-300 cursor-pointer"
+                        onClick={() => setIsLightboxOpen(true)}
+                      />
+
+                      {/* Hover Overlay with Zoom Icon */}
+                      <div
+                        onClick={() => setIsLightboxOpen(true)}
+                        className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer pointer-events-auto"
+                      >
+                        <div className="p-2.5 rounded-full bg-neutral-900/80 backdrop-blur-md border border-neutral-700 text-white shadow-lg transform group-hover:scale-110 transition-transform">
+                          <Maximize2 className="w-5 h-5 text-neutral-200" />
+                        </div>
+                      </div>
+
+                      {/* Navigation Arrows (if > 1 screenshot) */}
+                      {tool.screenshots.length > 1 && (
+                        <>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCurrentScreenshotIndex((prev) => (prev === 0 ? tool.screenshots.length - 1 : prev - 1));
+                            }}
+                            className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-neutral-950/70 hover:bg-neutral-900 text-white border border-neutral-800/80 backdrop-blur-md opacity-80 hover:opacity-100 transition-all hover:scale-110 cursor-pointer"
+                            title="Previous image"
+                          >
+                            <ChevronLeft className="w-5 h-5 text-neutral-200" />
+                          </button>
+
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCurrentScreenshotIndex((prev) => (prev === tool.screenshots.length - 1 ? 0 : prev + 1));
+                            }}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-neutral-950/70 hover:bg-neutral-900 text-white border border-neutral-800/80 backdrop-blur-md opacity-80 hover:opacity-100 transition-all hover:scale-110 cursor-pointer"
+                            title="Next image"
+                          >
+                            <ChevronRight className="w-5 h-5 text-neutral-200" />
+                          </button>
+                        </>
+                      )}
+
+                      {/* Dot indicators */}
+                      {tool.screenshots.length > 1 && (
+                        <div className="absolute bottom-3 left-0 right-0 flex items-center justify-center gap-1.5 pointer-events-none">
+                          {tool.screenshots.map((_: any, idx: number) => (
+                            <button
+                              key={idx}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setCurrentScreenshotIndex(idx);
+                              }}
+                              className={`h-1.5 rounded-full transition-all pointer-events-auto cursor-pointer ${
+                                currentScreenshotIndex === idx ? 'w-6 bg-red-600' : 'w-1.5 bg-white/40 hover:bg-white/70'
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Thumbnail Strip underneath */}
+                    {tool.screenshots.length > 1 && (
+                      <div className="flex items-center gap-2.5 mt-3 overflow-x-auto pb-1">
+                        {tool.screenshots.map((screenshot: any, index: number) => {
+                          const isActive = currentScreenshotIndex === index;
+                          return (
+                            <button
+                              key={index}
+                              onClick={() => setCurrentScreenshotIndex(index)}
+                              className={`relative shrink-0 w-20 h-14 rounded-lg overflow-hidden border transition-all cursor-pointer ${
+                                isActive
+                                  ? 'border-red-600 ring-2 ring-red-600/30 scale-105 opacity-100'
+                                  : 'border-neutral-800/80 opacity-60 hover:opacity-100 hover:border-neutral-600'
+                              }`}
+                            >
+                              <img
+                                src={screenshot.url || screenshot.imageUrl}
+                                alt={`Thumbnail ${index + 1}`}
+                                className="w-full h-full object-cover"
+                              />
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -388,25 +514,34 @@ const ToolDetailPage = () => {
 
             {/* Features Tab */}
             {activeTab === 'features' && (
-              <div className="p-4 rounded-lg bg-[#0a0a0a] border border-[#262626]">
-                <h2 className="text-lg font-bold mb-3 text-white">Key Features</h2>
-                {tool.keyFeatures && tool.keyFeatures.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    {tool.keyFeatures.map((feature: string, index: number) => (
-                      <div
-                        key={index}
-                        className="p-2.5 rounded flex items-center gap-2 bg-[#1a1a1a] border border-[#262626]"
-                      >
-                        <svg className="w-3.5 h-3.5 flex-shrink-0 text-[#8a1212]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                        <span className="text-xs text-white">{feature}</span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-[#8c8c8c]">No features listed.</p>
-                )}
+              <div className="p-4 sm:p-5 rounded-xl bg-[#0a0a0a] border border-[#262626]">
+                <h2 className="text-base sm:text-lg font-bold mb-4 text-white">Key Features</h2>
+                {(() => {
+                  const featuresList = tool.features || tool.keyFeatures || [];
+                  if (!featuresList || featuresList.length === 0) {
+                    return <p className="text-sm text-[#8c8c8c]">No features listed for this tool.</p>;
+                  }
+                  return (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {featuresList.map((feature: any, index: number) => {
+                        const featText = typeof feature === 'string' ? feature : feature.name || feature.description || 'Feature';
+                        return (
+                          <div
+                            key={index}
+                            className="p-3 rounded-lg flex items-center gap-3 bg-[#141414] border border-[#262626] hover:border-red-900/50 transition-colors"
+                          >
+                            <div className="w-6 h-6 rounded-full bg-red-600/20 text-red-400 border border-red-800/40 flex items-center justify-center shrink-0">
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                              </svg>
+                            </div>
+                            <span className="text-xs sm:text-sm text-neutral-200 font-medium">{featText}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
               </div>
             )}
 
@@ -452,225 +587,7 @@ const ToolDetailPage = () => {
               </div>
             )}
 
-            {/* Reviews Tab */}
-            {activeTab === 'reviews' && (
-              <div className="space-y-4">
-                {/* Review Statistics */}
-                {reviewStats && reviewStats.totalReviews > 0 && (
-                  <div className="p-4 rounded-lg bg-[#0a0a0a] border border-[#262626]">
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <div className="text-3xl font-bold text-white mb-1">
-                          {reviewStats.averageRating.toFixed(1)}
-                        </div>
-                        <div className="flex items-center gap-1 mb-1">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <svg
-                              key={star}
-                              className="w-4 h-4"
-                              fill={star <= Math.round(reviewStats.averageRating) ? '#fbbf24' : '#737373'}
-                              viewBox="0 0 20 20"
-                            >
-                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                            </svg>
-                          ))}
-                        </div>
-                        <div className="text-xs text-[#8c8c8c]">
-                          Based on {reviewStats.totalReviews} review{reviewStats.totalReviews !== 1 ? 's' : ''}
-                        </div>
-                      </div>
 
-                      {/* Rating Distribution */}
-                      <div className="flex-1 max-w-xs ml-6">
-                        {[5, 4, 3, 2, 1].map((rating) => {
-                          const count = reviewStats.ratingDistribution[rating] || 0;
-                          const percentage = reviewStats.totalReviews > 0
-                            ? (count / reviewStats.totalReviews) * 100
-                            : 0;
-
-                          return (
-                            <div key={rating} className="flex items-center gap-2 mb-1">
-                              <span className="text-xs text-[#8c8c8c] w-8">{rating} ★</span>
-                              <div className="flex-1 h-2 bg-[#1a1a1a] rounded-full overflow-hidden">
-                                <div
-                                  className="h-full bg-gradient-to-r from-[#8a1212] to-[#991b1b]"
-                                  style={{ width: `${percentage}%` }}
-                                />
-                              </div>
-                              <span className="text-xs text-[#8c8c8c] w-8">{count}</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Write Review Form */}
-                {isAuthenticated && !myReview && (
-                  <div className="p-4 rounded-lg bg-[#0a0a0a] border border-[#262626]">
-                    <h3 className="text-base font-bold mb-3 text-white">Write a Review</h3>
-                    <form onSubmit={handleSubmitReview} className="space-y-3">
-                      <div>
-                        <label className="block text-xs font-medium mb-1.5 text-[#b3b3b3]">Your Rating *</label>
-                        <div className="flex gap-1">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <button
-                              key={star}
-                              type="button"
-                              onClick={() => setUserRating(star)}
-                              className="text-2xl transition-all hover:scale-110"
-                              style={{ color: star <= userRating ? '#fbbf24' : '#737373' }}
-                            >
-                              ★
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-medium mb-1.5 text-[#b3b3b3]">Title (Optional)</label>
-                        <input
-                          type="text"
-                          value={reviewTitle}
-                          onChange={(e) => setReviewTitle(e.target.value)}
-                          maxLength={100}
-                          placeholder="Sum up your experience..."
-                          className="w-full px-3 py-2 rounded text-sm focus:outline-none bg-[#1a1a1a] border border-[#262626] text-white placeholder-[#737373]"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-medium mb-1.5 text-[#b3b3b3]">Your Review *</label>
-                        <textarea
-                          value={commentText}
-                          onChange={(e) => setCommentText(e.target.value)}
-                          rows={4}
-                          maxLength={2000}
-                          placeholder="Share your experience with this tool..."
-                          className="w-full px-3 py-2 rounded text-sm resize-none focus:outline-none bg-[#1a1a1a] border border-[#262626] text-white placeholder-[#737373]"
-                        />
-                        <div className="text-xs text-[#737373] mt-1 text-right">
-                          {commentText.length}/2000
-                        </div>
-                      </div>
-
-                      <button
-                        type="submit"
-                        disabled={!userRating || !commentText.trim() || createReview.isPending}
-                        className="px-4 py-2 rounded text-sm font-semibold transition-all hover:scale-105 bg-gradient-to-r from-[#8a1212] to-[#991b1b] text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {createReview.isPending ? 'Submitting...' : 'Submit Review'}
-                      </button>
-                    </form>
-                  </div>
-                )}
-
-                {/* User's Existing Review */}
-                {myReview && (
-                  <div className="p-4 rounded-lg bg-[#0a0a0a] border border-green-900/20">
-                    <div className="flex items-start justify-between mb-2">
-                      <h3 className="text-base font-bold text-white">Your Review</h3>
-                      <span className="text-xs text-green-400">✓ Submitted</span>
-                    </div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="flex">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <span
-                            key={star}
-                            className="text-sm"
-                            style={{ color: star <= myReview.rating ? '#fbbf24' : '#737373' }}
-                          >
-                            ★
-                          </span>
-                        ))}
-                      </div>
-                      <span className="text-xs text-[#8c8c8c]">{formatDate(myReview.createdAt)}</span>
-                    </div>
-                    {myReview.title && (
-                      <h4 className="font-semibold text-sm text-white mb-1">{myReview.title}</h4>
-                    )}
-                    <p className="text-sm text-[#b3b3b3]">{myReview.comment}</p>
-                  </div>
-                )}
-
-                {/* Reviews List */}
-                <div className="space-y-3">
-                  <h3 className="text-base font-bold text-white">
-                    All Reviews ({reviewsMeta?.total || 0})
-                  </h3>
-
-                  {reviewsLoading ? (
-                    <div className="flex items-center justify-center py-8">
-                      <div className="animate-spin w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full"></div>
-                    </div>
-                  ) : reviews.length === 0 ? (
-                    <div className="p-8 rounded-lg bg-[#0a0a0a] border border-[#262626] text-center">
-                      <p className="text-[#8c8c8c]">No reviews yet. Be the first to review this tool!</p>
-                    </div>
-                  ) : (
-                    reviews.map((review: any) => (
-                      <div
-                        key={review.id}
-                        className="p-4 rounded-lg bg-[#0a0a0a] border border-[#262626]"
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#8a1212] to-[#991b1b] flex items-center justify-center text-white font-bold">
-                            {review.user.username.charAt(0).toUpperCase()}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between mb-1">
-                              <div>
-                                <h4 className="font-bold text-sm text-white">{review.user.username}</h4>
-                                <div className="flex items-center gap-2">
-                                  <div className="flex">
-                                    {[1, 2, 3, 4, 5].map((star) => (
-                                      <span
-                                        key={star}
-                                        className="text-xs"
-                                        style={{ color: star <= review.rating ? '#fbbf24' : '#737373' }}
-                                      >
-                                        ★
-                                      </span>
-                                    ))}
-                                  </div>
-                                  <span className="text-xs text-[#8c8c8c]">{formatDate(review.createdAt)}</span>
-                                  {review.isVerified && (
-                                    <span className="text-xs text-green-400 flex items-center gap-1">
-                                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                      </svg>
-                                      Verified
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-
-                            {review.title && (
-                              <h5 className="font-semibold text-sm text-white mb-1">{review.title}</h5>
-                            )}
-                            <p className="mb-2 text-sm text-[#b3b3b3]">{review.comment}</p>
-
-                            <div className="flex items-center gap-3 text-xs">
-                              <button
-                                onClick={() => handleMarkHelpful(review.id)}
-                                className="flex items-center gap-1 hover:text-[#8a1212] text-[#8c8c8c] transition-colors"
-                              >
-                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
-                                </svg>
-                                Helpful ({review.isHelpful})
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Sidebar */}
@@ -719,8 +636,12 @@ const ToolDetailPage = () => {
                       href={`/tools/${similarTool.slug}`}
                       className="flex items-center gap-2 p-2 rounded hover:bg-[#1a1a1a] transition-all"
                     >
-                      <div className="w-8 h-8 rounded flex items-center justify-center text-lg bg-gradient-to-br from-[#8a1212] to-[#991b1b]">
-                        {similarTool.logo || '🤖'}
+                      <div className="w-8 h-8 rounded flex items-center justify-center text-lg bg-gradient-to-br from-[#8a1212] to-[#991b1b] overflow-hidden shrink-0">
+                        {similarTool.logo && (similarTool.logo.startsWith('http://') || similarTool.logo.startsWith('https://') || similarTool.logo.startsWith('/')) ? (
+                          <img src={similarTool.logo} alt={similarTool.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <span>{similarTool.logo || '🤖'}</span>
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="font-medium text-xs text-white truncate">
@@ -738,6 +659,245 @@ const ToolDetailPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Reviews Section - Always displayed at bottom of page with generous spacing */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 mt-10 sm:mt-12 pt-4 pb-16">
+        <div className="space-y-6">
+          <h2 className="text-md sm:text-xl font-bold text-white tracking-tight flex items-center gap-2">
+            <span>Reviews & Ratings</span>
+            <span className="text-sm font-normal text-neutral-400">({reviewsMeta?.total || 0})</span>
+          </h2>
+
+          {/* Review Statistics */}
+          {reviewStats && reviewStats.totalReviews > 0 && (
+            <div className="p-5 rounded-xl bg-[#0a0a0a] border border-[#262626]">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+                <div>
+                  <div className="text-4xl font-bold text-white mb-1">
+                    {reviewStats.averageRating.toFixed(1)}
+                  </div>
+                  <div className="flex items-center gap-1 mb-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <svg
+                        key={star}
+                        className="w-4 h-4"
+                        fill={star <= Math.round(reviewStats.averageRating) ? '#fbbf24' : '#737373'}
+                        viewBox="0 0 20 20"
+                      >
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    ))}
+                  </div>
+                  <div className="text-xs text-[#8c8c8c]">
+                    Based on {reviewStats.totalReviews} review{reviewStats.totalReviews !== 1 ? 's' : ''}
+                  </div>
+                </div>
+
+                {/* Rating Distribution */}
+                <div className="flex-1 max-w-sm sm:ml-6">
+                  {[5, 4, 3, 2, 1].map((rating) => {
+                    const count = reviewStats.ratingDistribution[rating] || 0;
+                    const percentage = reviewStats.totalReviews > 0
+                      ? (count / reviewStats.totalReviews) * 100
+                      : 0;
+
+                    return (
+                      <div key={rating} className="flex items-center gap-2 mb-1">
+                        <span className="text-xs text-[#8c8c8c] w-8">{rating} ★</span>
+                        <div className="flex-1 h-2 bg-[#1a1a1a] rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-[#8a1212] to-[#991b1b]"
+                            style={{ width: `${percentage}%` }}
+                          />
+                        </div>
+                        <span className="text-xs text-[#8c8c8c] w-8">{count}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Write Review Form */}
+          {isAuthenticated && !myReview && (
+            <div className="p-5 rounded-xl bg-[#0a0a0a] border border-[#262626]">
+              <h3 className="text-base font-bold mb-3 text-white">Write a Review</h3>
+              <form onSubmit={handleSubmitReview} className="space-y-3">
+                <div>
+                  <label className="block text-xs font-medium mb-1.5 text-[#b3b3b3]">Your Rating *</label>
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setUserRating(star)}
+                        className="text-2xl transition-all hover:scale-110"
+                        style={{ color: star <= userRating ? '#fbbf24' : '#737373' }}
+                      >
+                        ★
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium mb-1.5 text-[#b3b3b3]">Title (Optional)</label>
+                  <input
+                    type="text"
+                    value={reviewTitle}
+                    onChange={(e) => setReviewTitle(e.target.value)}
+                    maxLength={100}
+                    placeholder="Sum up your experience..."
+                    className="w-full px-3 py-2 rounded-lg text-sm focus:outline-none bg-[#1a1a1a] border border-[#262626] text-white placeholder-[#737373]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium mb-1.5 text-[#b3b3b3]">Your Review *</label>
+                  <textarea
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    rows={4}
+                    maxLength={2000}
+                    placeholder="Share your experience with this tool..."
+                    className="w-full px-3 py-2 rounded-lg text-sm resize-none focus:outline-none bg-[#1a1a1a] border border-[#262626] text-white placeholder-[#737373]"
+                  />
+                  <div className="text-xs text-[#737373] mt-1 text-right">
+                    {commentText.length}/2000
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={!userRating || !commentText.trim() || createReview.isPending}
+                  className="px-4 py-2 rounded-lg text-sm font-semibold transition-all hover:scale-105 bg-gradient-to-r from-[#8a1212] to-[#991b1b] text-white disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  {createReview.isPending ? 'Submitting...' : 'Submit Review'}
+                </button>
+              </form>
+            </div>
+          )}
+
+
+
+          {/* Reviews List */}
+          <div className="space-y-3">
+            <h3 className="text-base font-bold text-white">
+              All Reviews ({reviewsMeta?.total || 0})
+            </h3>
+
+            {reviewsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full"></div>
+              </div>
+            ) : reviews.length === 0 ? (
+              <div className="p-8 rounded-xl bg-[#0a0a0a] border border-[#262626] text-center">
+                <p className="text-[#8c8c8c]">No reviews yet. Be the first to review this tool!</p>
+              </div>
+            ) : (
+              reviews.map((review: any) => (
+                <div
+                  key={review.id}
+                  className="p-4 rounded-xl bg-[#0a0a0a] border border-[#262626]"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#8a1212] to-[#991b1b] flex items-center justify-center text-white font-bold shrink-0">
+                      {review.user.username.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <div>
+                          <h4 className="font-bold text-sm text-white">{review.user.username}</h4>
+                          <div className="flex items-center gap-2">
+                            <div className="flex">
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <span
+                                  key={star}
+                                  className="text-xs"
+                                  style={{ color: star <= review.rating ? '#fbbf24' : '#737373' }}
+                                >
+                                  ★
+                                </span>
+                              ))}
+                            </div>
+                            <span className="text-xs text-[#8c8c8c]">{formatDate(review.createdAt)}</span>
+                            {review.isVerified && (
+                              <span className="text-xs text-green-400 flex items-center gap-1">
+                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                </svg>
+                                Verified
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {review.title && (
+                        <h5 className="font-semibold text-sm text-white mb-1">{review.title}</h5>
+                      )}
+                      <p className="mb-2 text-sm text-[#b3b3b3]">{review.comment}</p>
+
+                      <div className="flex items-center gap-3 text-xs">
+                        <button
+                          onClick={() => handleMarkHelpful(review.id)}
+                          className="flex items-center gap-1 hover:text-[#8a1212] text-[#8c8c8c] transition-colors cursor-pointer"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+                          </svg>
+                          Helpful ({review.isHelpful})
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Full-screen Lightbox Modal */}
+      {isLightboxOpen && tool?.screenshots && tool.screenshots.length > 0 && (
+        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-xl flex items-center justify-center p-4">
+          <button
+            onClick={() => setIsLightboxOpen(false)}
+            className="absolute top-5 right-5 p-2.5 rounded-full bg-neutral-900/80 text-white border border-neutral-700 hover:bg-neutral-800 transition-all cursor-pointer z-50"
+            title="Close modal"
+          >
+            <X className="w-6 h-6 text-white" />
+          </button>
+
+          <div className="relative max-w-5xl max-h-[85vh] w-full flex items-center justify-center">
+            <img
+              src={tool.screenshots[currentScreenshotIndex]?.url || tool.screenshots[currentScreenshotIndex]?.imageUrl}
+              alt={`Full view screenshot ${currentScreenshotIndex + 1}`}
+              className="max-w-full max-h-[85vh] object-contain rounded-xl shadow-2xl border border-neutral-800"
+            />
+
+            {tool.screenshots.length > 1 && (
+              <>
+                <button
+                  onClick={() => setCurrentScreenshotIndex((prev) => (prev === 0 ? tool.screenshots.length - 1 : prev - 1))}
+                  className="absolute -left-3 sm:left-4 p-3 rounded-full bg-neutral-950/80 text-white border border-neutral-800 hover:bg-neutral-900 transition-all cursor-pointer shadow-lg"
+                  title="Previous image"
+                >
+                  <ChevronLeft className="w-6 h-6 text-white" />
+                </button>
+                <button
+                  onClick={() => setCurrentScreenshotIndex((prev) => (prev === tool.screenshots.length - 1 ? 0 : prev + 1))}
+                  className="absolute -right-3 sm:right-4 p-3 rounded-full bg-neutral-950/80 text-white border border-neutral-800 hover:bg-neutral-900 transition-all cursor-pointer shadow-lg"
+                  title="Next image"
+                >
+                  <ChevronRight className="w-6 h-6 text-white" />
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

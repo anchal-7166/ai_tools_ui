@@ -233,7 +233,7 @@ const Header = ({ onSidebarToggle, onSearch }: HeaderProps) => {
             </div>
 
             {/* Mode buttons */}
-            <div className="flex items-center bg-neutral-900/80 backdrop-blur-sm border border-neutral-700/60 rounded-lg sm:rounded-xl p-1 sm:p-1.5 gap-0.5 sm:gap-1">
+            <div className="flex items-center bg-neutral-800/60 backdrop-blur-sm border border-neutral-700/70 rounded-lg sm:rounded-xl p-1 sm:p-1.5 gap-0.5 sm:gap-1">
               {[
                 {
                   mode: 'text',
@@ -267,8 +267,8 @@ const Header = ({ onSidebarToggle, onSearch }: HeaderProps) => {
                     className={`
                       mode-btn-active relative p-1.5 sm:p-2 lg:p-2.5 rounded-md sm:rounded-lg transition-all duration-200 overflow-hidden
                       ${active
-                        ? 'bg-gradient-to-br from-red-600 to-red-800 text-white shadow-md shadow-red-900/50 scale-105'
-                        : 'text-neutral-500 hover:text-neutral-200 hover:bg-neutral-800/60'
+                        ? 'bg-gradient-to-br from-[#a81c1c] via-[#991b1b] to-[#7f1d1d] border border-red-600/60 text-white shadow-md shadow-red-900/40 scale-105'
+                        : 'text-neutral-400 hover:text-neutral-100 hover:bg-neutral-700/50'
                       }
                     `}
                   >
@@ -283,7 +283,7 @@ const Header = ({ onSidebarToggle, onSearch }: HeaderProps) => {
             {/* Submit */}
             <button
               type="submit"
-              className="relative px-3 sm:px-4 lg:px-6 py-2 sm:py-2.5 lg:py-3 bg-gradient-to-r from-red-600 via-red-700 to-red-800 text-white font-semibold text-xs sm:text-sm rounded-lg sm:rounded-xl overflow-hidden group transition-all duration-200 hover:shadow-xl hover:shadow-red-900/40 active:scale-95"
+              className="relative px-3 sm:px-4 lg:px-6 py-2 sm:py-2.5 lg:py-3 bg-gradient-to-r from-[#991b1b] via-[#8a1212] to-[#6b0c0c] border border-red-700/60 text-neutral-200 hover:text-white font-medium text-xs sm:text-sm rounded-lg sm:rounded-xl overflow-hidden group transition-all duration-200 hover:shadow-xl hover:shadow-red-900/50 active:scale-95"
             >
               <span className="relative z-10 flex items-center gap-1 sm:gap-2">
                 <span className="hidden sm:inline">Search</span>
